@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { HistoryItem } from '../../main/types'
+import type { HistoryItem } from '../../../main/types'
 
 function formatTime(ts: number): string {
   const date = new Date(ts)

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import type { SendProgress, SendStatus } from '../../main/types'
+import type { SendProgress, SendStatus } from '../../../main/types'
 
 export default function DropZone({
   status,
@@ -41,9 +41,12 @@ export default function DropZone({
     const files = Array.from(e.dataTransfer.files)
     if (files.length === 0) return
 
+    const filePath = window.fling.getPathForFile(files[0])
+    if (!filePath) return
+
     // Send the first dropped file (isScreenshot=false to preserve filename)
     await window.fling.sendFile({
-      filePath: files[0].path,
+      filePath,
       isScreenshot: false
     })
   }, [])

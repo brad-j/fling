@@ -11,7 +11,8 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
-    "typecheck": "tsc --noEmit"
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
     "menubar": "^9.5.1",

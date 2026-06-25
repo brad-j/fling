@@ -11,7 +11,7 @@ export interface SshResult {
 /**
  * Reads ~/.ssh/known_hosts and returns the host key for the given host, if present.
  */
-function readKnownHosts(host: string): string | undefined {
+function readKnownHosts(host: string, port: number): string | undefined {
   const knownHostsPath = join(homedir(), '.ssh', 'known_hosts')
   try {
     const content = readFileSync(knownHostsPath, 'utf8')
@@ -19,11 +19,14 @@ function readKnownHosts(host: string): string | undefined {
       const parts = line.trim().split(/\s+/)
       if (parts.length < 3) continue
       const hosts = parts[0]
-      const keyType = parts[1]
       const keyData = parts[2]
-      // known_hosts can have comma-separated hostnames or hashed entries
-      if (hosts.split(',').includes(host) || hosts.split(',').includes(`[${host}]:22`)) {
-        return `${keyType} ${keyData}`
+      const hostEntries = hosts.split(',')
+
+      // known_hosts can have comma-separated hostnames or hashed entries.
+      // Hashed entries are intentionally not decoded here; TOFU storage below
+      // still protects future connections made by Fling.
+      if (hostEntries.includes(host) || hostEntries.includes(`[${host}]:${port}`)) {
+        return keyData
       }
     }
   } catch {
@@ -32,53 +35,106 @@ function readKnownHosts(host: string): string | undefined {
   return undefined
 }
 
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`
+}
+
+function stripTrailingSlash(value: string): string {
+  return value.length > 1 ? value.replace(/\/+$/, '') : value
+}
+
+function expandRemoteDir(remoteDir: string, homeDir: string): string {
+  const trimmed = stripTrailingSlash(remoteDir.trim())
+  if (trimmed === '~') return homeDir
+  if (trimmed.startsWith('~/')) return `${homeDir}/${trimmed.slice(2)}`
+  return trimmed
+}
+
+function runCommand(conn: Client, command: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    conn.exec(command, (err, stream) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      let stdout = ''
+      let stderr = ''
+      stream.on('data', (chunk: Buffer) => {
+        stdout += chunk.toString('utf8')
+      })
+      stream.stderr.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString('utf8')
+      })
+      stream.on('close', (code: number | null) => {
+        if (code && code !== 0) {
+          reject(new Error(stderr.trim() || `Remote command failed with exit code ${code}`))
+          return
+        }
+        resolve(stdout)
+      })
+    })
+  })
+}
+
+function fastPut(conn: Client, localPath: string, remotePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    conn.sftp((err, sftp) => {
+      if (err) {
+        reject(err)
+        return
+      }
+
+      sftp.fastPut(localPath, remotePath, (putErr) => {
+        if (putErr) {
+          reject(putErr)
+          return
+        }
+        resolve()
+      })
+    })
+  })
+}
+
 export async function flingFile(
   localPath: string,
   remoteFilename: string
 ): Promise<SshResult> {
   const settings = getSettings()
   const privateKey = readPrivateKey(settings.keyPath)
+  const hostKeyId = `${settings.host}:${settings.port}`
+  const knownKey = getHostKey(hostKeyId) || getHostKey(settings.host) || readKnownHosts(settings.host, settings.port)
+
+  const conn = new Client()
 
   return new Promise((resolve, reject) => {
-    const conn = new Client()
+    let settled = false
 
-    const remotePath = `${settings.remotePath.replace(/\/$/, '')}/${remoteFilename}`
+    const finish = (err?: Error, result?: SshResult) => {
+      if (settled) return
+      settled = true
+      conn.end()
+      if (err) reject(err)
+      else resolve(result!)
+    }
 
-    conn.on('ready', () => {
-      // Ensure remote directory exists, then upload
-      conn.exec(`mkdir -p ${settings.remotePath}`, (err, stream) => {
-        if (err) {
-          conn.end()
-          reject(err)
-          return
-        }
-        stream.on('close', () => {
-          // Upload the file via SFTP
-          conn.sftp((err, sftp) => {
-            if (err) {
-              conn.end()
-              reject(err)
-              return
-            }
-            sftp.fastPut(localPath, remotePath, (err) => {
-              conn.end()
-              if (err) {
-                reject(err)
-              } else {
-                resolve({ remotePath })
-              }
-            })
-          })
-        })
-      })
+    conn.on('ready', async () => {
+      try {
+        const homeDir = stripTrailingSlash((await runCommand(conn, 'printf %s "$HOME"')).trim())
+        const remoteDir = expandRemoteDir(settings.remotePath, homeDir || '.')
+        const remotePath = `${remoteDir}/${remoteFilename}`
+
+        await runCommand(conn, `mkdir -p -- ${shellQuote(remoteDir)}`)
+        await fastPut(conn, localPath, remotePath)
+        finish(undefined, { remotePath })
+      } catch (err) {
+        finish(err instanceof Error ? err : new Error(String(err)))
+      }
     })
 
     conn.on('error', (err) => {
-      reject(err)
+      finish(err)
     })
-
-    // Host key verification (TOFU)
-    const knownKey = getHostKey(settings.host) || readKnownHosts(settings.host)
 
     conn.connect({
       host: settings.host,
@@ -86,23 +142,13 @@ export async function flingFile(
       username: settings.username,
       privateKey,
       hostVerifier: (key: Buffer) => {
+        const presentedKey = key.toString('base64')
         if (knownKey) {
-          // Compare the presented key with the known key
-          // ssh2 gives us the key as a Buffer; we compare hex
-          const presentedHex = key.toString('hex')
-          // known_hosts key is base64 encoded
-          const knownParts = knownKey.split(' ')
-          if (knownParts.length >= 2) {
-            const knownBuf = Buffer.from(knownParts[1], 'base64')
-            if (knownBuf.toString('hex') === presentedHex) {
-              return true
-            }
-            // Key mismatch — potential MITM
-            return false
-          }
+          return knownKey.trim() === presentedKey
         }
-        // No known key — trust on first use
-        setHostKey(settings.host, key.toString('base64'))
+
+        // No known key — trust on first use.
+        setHostKey(hostKeyId, presentedKey)
         return true
       }
     })

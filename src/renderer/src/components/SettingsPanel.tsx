@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import type { FlingSettings } from '../../main/types'
+import type { FlingSettings } from '../../../main/types'
 
 export default function SettingsPanel() {
   const [settings, setSettings] = useState<FlingSettings | null>(null)

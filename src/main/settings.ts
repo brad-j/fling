@@ -1,19 +1,44 @@
 import Store from 'electron-store'
-import { existsSync, readFileSync } from 'fs'
+import { readFileSync, statSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 import type { FlingSettings, HistoryItem } from './types'
 
+const ZEDD_KEY_DIR = join(homedir(), '.ssh', 'zedd')
+const ZEDD_KEY_PATH = join(ZEDD_KEY_DIR, 'id_ed25519')
+
 const DEFAULT_KEY_PATHS = [
+  ZEDD_KEY_PATH,
+  join(ZEDD_KEY_DIR, 'id_rsa'),
   join(homedir(), '.ssh', 'id_ed25519'),
   join(homedir(), '.ssh', 'id_rsa')
 ]
 
+function isFile(path: string): boolean {
+  try {
+    return statSync(path).isFile()
+  } catch {
+    return false
+  }
+}
+
+function isDirectory(path: string): boolean {
+  try {
+    return statSync(path).isDirectory()
+  } catch {
+    return false
+  }
+}
+
+function resolveHomePath(path: string): string {
+  return path.startsWith('~/') ? join(homedir(), path.slice(2)) : path
+}
+
 function detectKeyPath(): string {
   for (const p of DEFAULT_KEY_PATHS) {
-    if (existsSync(p)) return p
+    if (isFile(p)) return p
   }
-  return DEFAULT_KEY_PATHS[0]
+  return ZEDD_KEY_PATH
 }
 
 const store = new Store<{
@@ -37,8 +62,24 @@ const store = new Store<{
   }
 })
 
+function migrateDetectedKeyPath(settings: FlingSettings): FlingSettings {
+  const resolvedKeyPath = resolveHomePath(settings.keyPath)
+  const genericKeyPaths = new Set(DEFAULT_KEY_PATHS.filter((p) => p !== ZEDD_KEY_PATH))
+
+  if (
+    isFile(ZEDD_KEY_PATH) &&
+    (resolvedKeyPath === ZEDD_KEY_DIR || isDirectory(resolvedKeyPath) || genericKeyPaths.has(resolvedKeyPath))
+  ) {
+    const migrated = { ...settings, keyPath: ZEDD_KEY_PATH }
+    store.set('settings', migrated)
+    return migrated
+  }
+
+  return settings
+}
+
 export function getSettings(): FlingSettings {
-  return store.get('settings')
+  return migrateDetectedKeyPath(store.get('settings'))
 }
 
 export function updateSettings(patch: Partial<FlingSettings>): FlingSettings {
@@ -73,8 +114,15 @@ export function setHostKey(host: string, key: string): void {
 }
 
 export function readPrivateKey(keyPath: string): Buffer {
-  const resolved = keyPath.startsWith('~/')
-    ? join(homedir(), keyPath.slice(2))
-    : keyPath
+  const resolved = resolveHomePath(keyPath)
+
+  if (isDirectory(resolved)) {
+    for (const candidate of ['id_ed25519', 'id_rsa']) {
+      const candidatePath = join(resolved, candidate)
+      if (isFile(candidatePath)) return readFileSync(candidatePath)
+    }
+    throw new Error(`SSH key path is a directory with no supported private key: ${resolved}`)
+  }
+
   return readFileSync(resolved)
 }

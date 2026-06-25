@@ -43,6 +43,14 @@ pnpm dev
 pnpm build
 ```
 
+## Tray icons
+
+Tray icons are committed as PNG assets under `src/main/icons/`. If the glyph changes, regenerate them with:
+
+```bash
+pnpm icons:generate
+```
+
 ## License
 
 MIT

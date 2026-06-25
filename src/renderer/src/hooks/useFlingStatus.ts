@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { SendProgress, SendStatus } from '../../main/types'
+import type { SendProgress, SendStatus } from '../../../main/types'
 
 export function useFlingStatus() {
   const [status, setStatus] = useState<SendStatus>('idle')

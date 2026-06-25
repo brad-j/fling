@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { FlingSettings, HistoryItem, SendProgress } from '../main/types'
 
 const api = {
@@ -16,6 +16,9 @@ const api = {
 
   clearHistory: (): Promise<void> =>
     ipcRenderer.invoke('fling:clearHistory'),
+
+  getPathForFile: (file: File): string =>
+    webUtils.getPathForFile(file),
 
   onStatus: (callback: (progress: SendProgress) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, progress: SendProgress) => {

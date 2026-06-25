@@ -5,6 +5,7 @@
   "author": "brad-j",
   "license": "MIT",
   "private": true,
+  "main": "./out/main/index.js",
   "type": "module",
   "scripts": {
     "dev": "electron-vite dev",

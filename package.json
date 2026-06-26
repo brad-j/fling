@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Fling files to remote machines over SSH — from your menubar",
   "author": "brad-j",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "private": true,
   "packageManager": "pnpm@11.9.0",
   "main": "./out/main/index.js",

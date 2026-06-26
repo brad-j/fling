@@ -75,4 +75,6 @@ pnpm icons:generate
 
 ## License
 
-MIT
+Proprietary. All rights reserved.
+
+This source code is not licensed for copying, modification, redistribution, or use except with explicit permission from the copyright holder.

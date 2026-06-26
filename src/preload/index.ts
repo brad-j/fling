@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { ConnectionTestResult, FlingSettings, HistoryItem, HostKeyRecord, SendProgress, SshConfigHost } from '../main/types'
+import type { ConnectionTestResult, FlingSettings, HistoryItem, HostKeyRecord, LatestScreenshotInfo, SendProgress, SshConfigHost } from '../main/types'
 
 const api = {
   sendFile: (opts: { filePath?: string; isScreenshot?: boolean }) =>
@@ -23,11 +23,20 @@ const api = {
   getSshConfigHosts: (): Promise<SshConfigHost[]> =>
     ipcRenderer.invoke('filefling:getSshConfigHosts'),
 
+  getLatestScreenshot: (): Promise<LatestScreenshotInfo | null> =>
+    ipcRenderer.invoke('filefling:getLatestScreenshot'),
+
   getHistory: (): Promise<HistoryItem[]> =>
     ipcRenderer.invoke('filefling:getHistory'),
 
+  deleteHistoryItem: (id: string): Promise<void> =>
+    ipcRenderer.invoke('filefling:deleteHistoryItem', id),
+
   clearHistory: (): Promise<void> =>
     ipcRenderer.invoke('filefling:clearHistory'),
+
+  revealInFinder: (filePath: string): Promise<void> =>
+    ipcRenderer.invoke('filefling:revealInFinder', filePath),
 
   getPathForFile: (file: File): string =>
     webUtils.getPathForFile(file),

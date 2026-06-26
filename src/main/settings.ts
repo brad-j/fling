@@ -124,6 +124,10 @@ export function clearHistory(): void {
   store.set('history', [])
 }
 
+export function deleteHistoryItem(id: string): void {
+  store.set('history', getHistory().filter((item) => item.id !== id))
+}
+
 export function getHostKey(host: string): string | undefined {
   const value = store.get('hostKeys')[host]
   return typeof value === 'string' ? value : value?.key

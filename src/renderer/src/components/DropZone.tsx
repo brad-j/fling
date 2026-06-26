@@ -1,5 +1,15 @@
-import { useState, useRef, useCallback } from 'react'
-import type { SendProgress, SendStatus } from '../../../main/types'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import type { LatestScreenshotInfo, SendProgress, SendStatus } from '../../../main/types'
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function formatScreenshotTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 export default function DropZone({
   status,
@@ -9,7 +19,23 @@ export default function DropZone({
   progress: SendProgress | null
 }) {
   const [isDragging, setIsDragging] = useState(false)
+  const [latestScreenshot, setLatestScreenshot] = useState<LatestScreenshotInfo | null>(null)
   const dragCounter = useRef(0)
+
+  const refreshLatestScreenshot = useCallback(async () => {
+    setLatestScreenshot(await window.filefling.getLatestScreenshot())
+  }, [])
+
+  useEffect(() => {
+    refreshLatestScreenshot()
+  }, [refreshLatestScreenshot])
+
+  useEffect(() => {
+    if (status === 'success' || status === 'error') {
+      const timer = setTimeout(refreshLatestScreenshot, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [status, refreshLatestScreenshot])
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -52,14 +78,18 @@ export default function DropZone({
   }, [])
 
   const handleSendLatest = useCallback(async () => {
-    await window.filefling.sendFile({ isScreenshot: true })
-  }, [])
+    await window.filefling.sendFile(
+      latestScreenshot
+        ? { filePath: latestScreenshot.filePath, isScreenshot: true }
+        : { isScreenshot: true }
+    )
+  }, [latestScreenshot])
 
   // ─── Status display ───
 
   const statusText = (() => {
     if (status === 'sending') return `Sending ${progress?.filename || ''}...`
-    if (status === 'success') return `Sent! Path copied to clipboard`
+    if (status === 'success') return `Sent! Output copied to clipboard`
     if (status === 'error') return `Error: ${progress?.error || 'Unknown'}`
     return 'Drop a file to send it'
   })()
@@ -105,6 +135,48 @@ export default function DropZone({
         </p>
       </div>
 
+      {/* ─── Latest Screenshot Preview ─── */}
+      <div className="theme-dropzone rounded-xl border p-2 flex gap-2 items-center">
+        {latestScreenshot?.dataUrl ? (
+          <img
+            src={latestScreenshot.dataUrl}
+            alt="Latest screenshot preview"
+            className="w-20 h-12 rounded-md object-cover border"
+            style={{ borderColor: 'var(--accent-border)' }}
+          />
+        ) : (
+          <div className="w-20 h-12 rounded-md border flex items-center justify-center" style={{ borderColor: 'var(--accent-border)' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <p className="theme-muted-soft text-[9px] uppercase tracking-wide">Latest screenshot</p>
+          {latestScreenshot ? (
+            <>
+              <p className="theme-text text-[10px] font-mono truncate">{latestScreenshot.filename}</p>
+              <p className="theme-muted-soft text-[9px]">
+                {formatScreenshotTime(latestScreenshot.mtime)} · {formatBytes(latestScreenshot.size)}
+              </p>
+            </>
+          ) : (
+            <p className="theme-muted text-[10px]">No screenshot found</p>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={refreshLatestScreenshot}
+          className="theme-link text-[9px] transition-colors"
+          title="Refresh latest screenshot"
+        >
+          Refresh
+        </button>
+      </div>
+
       {/* ─── Send Latest Screenshot Button ─── */}
       <button
         onClick={handleSendLatest}
@@ -129,7 +201,7 @@ export default function DropZone({
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
               <circle cx="12" cy="13" r="4" />
             </svg>
-            Send Latest Screenshot
+            {latestScreenshot ? 'Send' : 'Send Latest Screenshot'}
           </>
         )}
       </button>

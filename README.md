@@ -22,6 +22,7 @@ Default pasted value:
 
 - **Menubar-only app** — lives in the macOS menubar, not the dock.
 - **Global hotkey** — `⌘⇧F` sends the latest screenshot without opening the dropdown.
+- **Latest screenshot preview** — shows a thumbnail, filename, time, and size before sending.
 - **Drag & drop upload** — drop a file onto the dropdown to send it.
 - **SSH/SFTP transport** — uses the Node `ssh2` library; no external `scp` binary required.
 - **First-run onboarding** — guided setup flow for SSH destination details.
@@ -29,7 +30,7 @@ Default pasted value:
 - **SSH config import** — select concrete hosts from `~/.ssh/config` to fill host, user, port, and identity file.
 - **Clipboard output templates** — copy a raw path, Markdown, or a reusable agent prompt after upload.
 - **Auto-copy remote output** — successful sends copy the rendered clipboard template.
-- **Send history** — keeps the last 10 sends; click a successful item to copy its rendered clipboard output again.
+- **Send history** — keeps the last 10 sends; search, copy, retry/send again, reveal local files, or delete individual items.
 - **TOFU host key verification** — trusts on first use and verifies future connections against stored host key metadata.
 - **Host key management** — view trusted host key fingerprints in Settings and forget stale keys after server rebuilds.
 - **Friendly error messages** — common SSH/file failures are mapped to actionable messages.
@@ -148,9 +149,40 @@ Please inspect this uploaded file on {{host}}: {{remotePath}}
 
 Unknown placeholders are left visible so mistakes are easy to spot. Multiline templates are supported. Send history stores the rendered clipboard text from successful sends, so clicking a history item copies the same output that was copied when the file was originally uploaded.
 
+## Screenshot preview
+
+The main dropdown shows the latest screenshot from the configured screenshot directory before upload.
+
+The preview includes:
+
+- Thumbnail, when macOS can generate one
+- Local filename
+- Modified time
+- File size
+- Refresh action
+
+Pressing **Send Previewed Screenshot** uploads the shown file. If no preview is available, FileFling falls back to resolving the latest screenshot at send time.
+
+## History actions
+
+The Recent list stores the last 10 sends with local file metadata when available.
+
+Available actions:
+
+- Click a successful row to copy the rendered clipboard output.
+- **Copy raw** copies only the remote path.
+- **Retry** retries a failed upload when the original local file is still available.
+- **Send again** uploads the same local file again.
+- **Reveal** opens the local file in Finder.
+- **Delete** removes one history item.
+- **Clear** removes all history.
+- Search filters by filename, remote path, local path, or error text.
+
+Older history entries created before this feature may not have local path or file size metadata, so retry/reveal may not be available for those items.
+
 ## Screenshot and filename behavior
 
-Screenshots sent via hotkey or the **Send Latest Screenshot** button are renamed to a clean timestamp:
+Screenshots sent via hotkey or the **Send Previewed Screenshot** / latest screenshot button are renamed to a clean timestamp:
 
 ```text
 2026-06-25_143015.png

@@ -1,6 +1,7 @@
 import { readdirSync, statSync, existsSync } from 'fs'
 import { join } from 'path'
 import { getSettings } from './settings'
+import type { LatestScreenshotInfo } from './types'
 
 /**
  * Sanitize a filename: replace spaces and special chars with underscores.
@@ -25,7 +26,7 @@ export function timestampFilename(originalName: string): string {
  * Find the most recent file in the screenshot directory.
  * Returns null if directory is empty or doesn't exist.
  */
-export function getLatestScreenshot(): string | null {
+export function getLatestScreenshotInfo(): LatestScreenshotInfo | null {
   const settings = getSettings()
   const dir = settings.screenshotDir
 
@@ -33,12 +34,21 @@ export function getLatestScreenshot(): string | null {
 
   const files = readdirSync(dir)
     .filter((f) => /\.(png|jpg|jpeg|gif|webp)$/i.test(f))
-    .map((f) => ({
-      name: f,
-      path: join(dir, f),
-      mtime: statSync(join(dir, f)).mtime.getTime()
-    }))
+    .map((f) => {
+      const path = join(dir, f)
+      const stat = statSync(path)
+      return {
+        filename: f,
+        filePath: path,
+        size: stat.size,
+        mtime: stat.mtime.getTime()
+      }
+    })
     .sort((a, b) => b.mtime - a.mtime)
 
-  return files.length > 0 ? files[0].path : null
+  return files.length > 0 ? files[0] : null
+}
+
+export function getLatestScreenshot(): string | null {
+  return getLatestScreenshotInfo()?.filePath ?? null
 }

@@ -6,7 +6,7 @@ import { flingFile } from './ssh'
 import { describeFileFlingError } from './errors'
 import { renderClipboardTemplate } from './clipboardTemplate'
 import { getLatestScreenshot, sanitizeFilename, timestampFilename } from './files'
-import { getSettings, addHistoryItem, clearHistory, getHistory } from './settings'
+import { getSettings, addHistoryItem, clearHistory, deleteHistoryItem, getHistory } from './settings'
 import type { SendProgress, HistoryItem } from './types'
 import { randomUUID } from 'crypto'
 
@@ -36,7 +36,7 @@ function notify(title: string, body: string): void {
   }
 }
 
-function assertReadableFile(filePath: string): void {
+function getReadableFileSize(filePath: string): number {
   let stat
   try {
     stat = statSync(filePath)
@@ -47,6 +47,8 @@ function assertReadableFile(filePath: string): void {
   if (!stat.isFile()) {
     throw new Error(`Path is not a file: ${filePath}`)
   }
+
+  return stat.size
 }
 
 /**
@@ -93,8 +95,10 @@ export async function sendFile(opts: {
 
   broadcastStatus({ status: 'sending', filename: remoteFilename })
 
+  let fileSize: number | undefined
+
   try {
-    assertReadableFile(localPath)
+    fileSize = getReadableFileSize(localPath)
     const result = await flingFile(localPath, remoteFilename)
 
     const timestamp = Date.now()
@@ -119,6 +123,9 @@ export async function sendFile(opts: {
       filename: remoteFilename,
       remotePath: result.remotePath,
       clipboardText,
+      localPath,
+      isScreenshot,
+      fileSize,
       timestamp,
       status: 'success'
     }
@@ -133,6 +140,9 @@ export async function sendFile(opts: {
       id: randomUUID(),
       filename: remoteFilename,
       remotePath: '',
+      localPath,
+      isScreenshot,
+      fileSize,
       timestamp: Date.now(),
       status: 'error',
       error: errorMsg
@@ -141,4 +151,4 @@ export async function sendFile(opts: {
   }
 }
 
-export { getHistory, clearHistory }
+export { getHistory, clearHistory, deleteHistoryItem }

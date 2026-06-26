@@ -85,6 +85,8 @@ Renderer hardening:
 - `~/` remote paths are expanded before SFTP upload
 - uploaded filenames are sanitized
 - local send paths are checked to be files, not directories
+- screenshot preview thumbnails are generated in the main process and exposed as data URLs
+- history may store local file paths to support retry/reveal actions
 - host keys are verified with TOFU storage
 - host-key metadata includes host, port, algorithm, SHA256 fingerprint, and trust timestamp
 - trusted host keys can be reviewed and forgotten from Settings
@@ -97,5 +99,6 @@ These should be handled before a broad launch, even if they are not blockers for
 - Consider adding the connection test action to Settings for post-onboarding edits.
 - Consider adding an explicit confirmation dialog before trusting a first-seen host key.
 - Consider supporting advanced SSH config options only with explicit security review, especially `ProxyCommand` and `Match`.
+- Consider adding a privacy toggle to disable storing local file paths in send history.
 - Keep Electron patched; `pnpm security:audit` must pass before release.
 - Revisit macOS entitlements after signing. Keep them as narrow as possible while still supporting Electron and native modules.

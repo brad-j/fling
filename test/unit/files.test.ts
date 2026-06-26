@@ -1,10 +1,17 @@
+import { mkdirSync, utimesSync, writeFileSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('../../src/main/settings', () => ({
-  getSettings: () => ({ screenshotDir: '/tmp' })
+const mockState = vi.hoisted(() => ({
+  screenshotDir: '/tmp'
 }))
 
-import { sanitizeFilename, timestampFilename } from '../../src/main/files'
+vi.mock('../../src/main/settings', () => ({
+  getSettings: () => ({ screenshotDir: mockState.screenshotDir })
+}))
+
+import { getLatestScreenshotInfo, sanitizeFilename, timestampFilename } from '../../src/main/files'
 
 describe('file naming', () => {
   it('removes unsafe filename characters', () => {
@@ -22,5 +29,32 @@ describe('file naming', () => {
     expect(timestampFilename('anything.jpeg')).toBe('2026-06-25_143015.jpeg')
 
     vi.useRealTimers()
+  })
+})
+
+describe('latest screenshot lookup', () => {
+  it('returns metadata for the newest image file', () => {
+    const dir = join(tmpdir(), `filefling-screenshots-${Date.now()}`)
+    mkdirSync(dir)
+    mockState.screenshotDir = dir
+
+    const older = join(dir, 'older.png')
+    const newer = join(dir, 'newer.jpg')
+    const ignored = join(dir, 'notes.txt')
+
+    writeFileSync(older, 'old')
+    writeFileSync(ignored, 'ignored')
+    writeFileSync(newer, 'new-image')
+    utimesSync(older, new Date('2026-01-01T00:00:00Z'), new Date('2026-01-01T00:00:00Z'))
+    utimesSync(newer, new Date('2026-01-02T00:00:00Z'), new Date('2026-01-02T00:00:00Z'))
+
+    const latest = getLatestScreenshotInfo()
+
+    expect(latest).toMatchObject({
+      filePath: newer,
+      filename: 'newer.jpg',
+      size: Buffer.byteLength('new-image')
+    })
+    expect(latest?.mtime).toEqual(expect.any(Number))
   })
 })

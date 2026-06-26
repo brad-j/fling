@@ -26,11 +26,22 @@ export interface SshConfigHost {
   warnings: string[]
 }
 
+export interface LatestScreenshotInfo {
+  filePath: string
+  filename: string
+  size: number
+  mtime: number
+  dataUrl?: string
+}
+
 export interface HistoryItem {
   id: string
   filename: string
   remotePath: string
   clipboardText?: string
+  localPath?: string
+  isScreenshot?: boolean
+  fileSize?: number
   timestamp: number
   status: 'success' | 'error'
   error?: string

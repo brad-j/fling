@@ -1,4 +1,4 @@
-// Generate Fling's tray PNG icons and packaged macOS app icon without relying
+// Generate FileFling's tray PNG icons and packaged macOS app icon without relying
 // on Electron/Chromium SVG rendering. Electron's nativeImage.createFromDataURL()
 // does not rasterize SVG reliably on macOS, so the app loads generated PNG
 // assets instead.

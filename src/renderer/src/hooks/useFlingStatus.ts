@@ -6,7 +6,7 @@ export function useFlingStatus() {
   const [progress, setProgress] = useState<SendProgress | null>(null)
 
   useEffect(() => {
-    const unsubscribe = window.fling.onStatus((p) => {
+    const unsubscribe = window.filefling.onStatus((p) => {
       setProgress(p)
       setStatus(p.status)
 

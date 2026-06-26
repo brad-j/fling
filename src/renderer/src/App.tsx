@@ -21,12 +21,12 @@ export default function App() {
   }, [])
 
   const refreshHistory = useCallback(async () => {
-    const items = await window.fling.getHistory()
+    const items = await window.filefling.getHistory()
     setHistory(items)
   }, [])
 
   const refreshSettings = useCallback(async () => {
-    const loadedSettings = await window.fling.getSettings()
+    const loadedSettings = await window.filefling.getSettings()
     setSettings(loadedSettings)
   }, [])
 
@@ -44,12 +44,12 @@ export default function App() {
   }, [status, refreshHistory])
 
   return (
-    <div data-theme={theme} className="fling-window w-full h-full flex flex-col">
+    <div data-theme={theme} className="filefling-window w-full h-full flex flex-col">
       {/* ─── Header ─── */}
       <header className="theme-header flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <FlingLogo state={status} />
-          <h1 className="theme-title text-sm font-semibold tracking-[0.18em]">FLING</h1>
+          <h1 className="theme-title text-sm font-semibold tracking-[0.18em]">FILEFLING</h1>
         </div>
         {view === 'settings' ? (
           <button
@@ -91,14 +91,14 @@ export default function App() {
       {/* ─── Footer ─── */}
       <footer className="theme-footer px-4 py-2 border-t">
         <p className="theme-muted-soft text-[10px] text-center tracking-wide">
-          <span className="theme-hotkey">⌘⇧F</span> to fling latest screenshot
+          <span className="theme-hotkey">⌘⇧F</span> to send latest screenshot
         </p>
       </footer>
     </div>
   )
 }
 
-// ─── Fling Logo (animated state) ─────────────────────────────────────
+// ─── FileFling Logo (animated state) ─────────────────────────────────
 
 function FlingLogo({ state }: { state: string }) {
   const colors: Record<string, string> = {

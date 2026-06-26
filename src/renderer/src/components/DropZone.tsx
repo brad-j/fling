@@ -41,18 +41,18 @@ export default function DropZone({
     const files = Array.from(e.dataTransfer.files)
     if (files.length === 0) return
 
-    const filePath = window.fling.getPathForFile(files[0])
+    const filePath = window.filefling.getPathForFile(files[0])
     if (!filePath) return
 
     // Send the first dropped file (isScreenshot=false to preserve filename)
-    await window.fling.sendFile({
+    await window.filefling.sendFile({
       filePath,
       isScreenshot: false
     })
   }, [])
 
   const handleSendLatest = useCallback(async () => {
-    await window.fling.sendFile({ isScreenshot: true })
+    await window.filefling.sendFile({ isScreenshot: true })
   }, [])
 
   // ─── Status display ───
@@ -61,7 +61,7 @@ export default function DropZone({
     if (status === 'sending') return `Sending ${progress?.filename || ''}...`
     if (status === 'success') return `Sent! Path copied to clipboard`
     if (status === 'error') return `Error: ${progress?.error || 'Unknown'}`
-    return 'Drop a file to fling it'
+    return 'Drop a file to send it'
   })()
 
   const statusColor = {
@@ -101,7 +101,7 @@ export default function DropZone({
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
         <p className="theme-muted text-xs tracking-wide">
-          {isDragging ? 'Release to fling' : 'Drag & drop a file'}
+          {isDragging ? 'Release to send' : 'Drag & drop a file'}
         </p>
       </div>
 

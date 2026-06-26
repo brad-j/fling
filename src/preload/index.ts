@@ -3,19 +3,19 @@ import type { FlingSettings, HistoryItem, SendProgress } from '../main/types'
 
 const api = {
   sendFile: (opts: { filePath?: string; isScreenshot?: boolean }) =>
-    ipcRenderer.invoke('fling:sendFile', opts),
+    ipcRenderer.invoke('filefling:sendFile', opts),
 
   getSettings: (): Promise<FlingSettings> =>
-    ipcRenderer.invoke('fling:getSettings'),
+    ipcRenderer.invoke('filefling:getSettings'),
 
   updateSettings: (patch: Partial<FlingSettings>): Promise<FlingSettings> =>
-    ipcRenderer.invoke('fling:updateSettings', patch),
+    ipcRenderer.invoke('filefling:updateSettings', patch),
 
   getHistory: (): Promise<HistoryItem[]> =>
-    ipcRenderer.invoke('fling:getHistory'),
+    ipcRenderer.invoke('filefling:getHistory'),
 
   clearHistory: (): Promise<void> =>
-    ipcRenderer.invoke('fling:clearHistory'),
+    ipcRenderer.invoke('filefling:clearHistory'),
 
   getPathForFile: (file: File): string =>
     webUtils.getPathForFile(file),
@@ -24,12 +24,12 @@ const api = {
     const handler = (_event: Electron.IpcRendererEvent, progress: SendProgress) => {
       callback(progress)
     }
-    ipcRenderer.on('fling:status', handler)
+    ipcRenderer.on('filefling:status', handler)
     // Return an unsubscribe function
-    return () => ipcRenderer.removeListener('fling:status', handler)
+    return () => ipcRenderer.removeListener('filefling:status', handler)
   }
 }
 
-export type FlingApi = typeof api
+export type FileFlingApi = typeof api
 
-contextBridge.exposeInMainWorld('fling', api)
+contextBridge.exposeInMainWorld('filefling', api)

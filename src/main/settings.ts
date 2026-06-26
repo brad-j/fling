@@ -46,7 +46,7 @@ const store = new Store<{
   history: HistoryItem[]
   hostKeys: Record<string, string>
 }>({
-  name: 'fling',
+  name: 'filefling',
   defaults: {
     settings: {
       host: '',

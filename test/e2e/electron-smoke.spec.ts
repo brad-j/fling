@@ -20,10 +20,10 @@ test('boots the Electron app with a constrained renderer bridge', async () => {
   const page = await app.firstWindow({ timeout: 15_000 })
   await page.waitForLoadState('domcontentloaded')
 
-  await expect(page.getByRole('heading', { name: 'FLING' })).toBeAttached()
+  await expect(page.getByRole('heading', { name: 'FILEFLING' })).toBeAttached()
 
   const rendererSecurity = await page.evaluate(() => ({
-    hasBridge: typeof window.fling === 'object',
+    hasBridge: typeof window.filefling === 'object',
     hasRequire: typeof (window as unknown as { require?: unknown }).require !== 'undefined',
     hasNodeProcess: typeof (window as unknown as { process?: unknown }).process !== 'undefined'
   }))

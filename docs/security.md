@@ -1,6 +1,6 @@
 # Security and testing checklist
 
-Fling is a local Electron app that reads files from disk and sends them to a user-configured SSH server. The main public-release risks are renderer compromise, unsafe IPC input, SSH path handling, stale Electron vulnerabilities, and accidentally shipping personal defaults.
+FileFling is a local Electron app that reads files from disk and sends them to a user-configured SSH server. The main public-release risks are renderer compromise, unsafe IPC input, SSH path handling, stale Electron vulnerabilities, and accidentally shipping personal defaults.
 
 ## Required release checks
 
@@ -74,7 +74,7 @@ Navigation hardening:
 Renderer hardening:
 
 - Content Security Policy in `src/renderer/index.html`
-- preload exposes only a small `window.fling` API
+- preload exposes only a small `window.filefling` API
 - main-process IPC handlers validate renderer input
 
 ## SSH/path handling in place

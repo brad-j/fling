@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface Window {
-  fling: {
+  filefling: {
     sendFile: (opts: { filePath?: string; isScreenshot?: boolean }) => Promise<void>
     getSettings: () => Promise<import('../../main/types').FlingSettings>
     updateSettings: (patch: Partial<import('../../main/types').FlingSettings>) => Promise<import('../../main/types').FlingSettings>

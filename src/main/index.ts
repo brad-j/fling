@@ -24,7 +24,7 @@ function createTrayImage(state: SendStatus = 'idle'): NativeImage {
   const img = nativeImage.createFromPath(imagePath)
 
   if (img.isEmpty()) {
-    console.error(`[fling] Failed to load tray icon: ${imagePath}`)
+    console.error(`[filefling] Failed to load tray icon: ${imagePath}`)
   }
 
   // Only idle should be a template image. Colored status flashes should keep
@@ -105,7 +105,7 @@ function createMenubar(): void {
 
   mb.on('ready', () => {
     if (mb?.tray) {
-      mb.tray.setToolTip('Fling — drop to send')
+      mb.tray.setToolTip('FileFling — drop to send')
     }
   })
 
@@ -118,23 +118,23 @@ function createMenubar(): void {
 // ─── IPC Handlers ────────────────────────────────────────────────────
 
 function registerIpc(): void {
-  ipcMain.handle('fling:sendFile', (_event, opts: unknown) => {
+  ipcMain.handle('filefling:sendFile', (_event, opts: unknown) => {
     return sendFile(validateSendFileOptions(opts))
   })
 
-  ipcMain.handle('fling:getSettings', () => {
+  ipcMain.handle('filefling:getSettings', () => {
     return getSettings()
   })
 
-  ipcMain.handle('fling:updateSettings', (_event, patch: unknown) => {
+  ipcMain.handle('filefling:updateSettings', (_event, patch: unknown) => {
     return updateSettings(validateSettingsPatch(patch))
   })
 
-  ipcMain.handle('fling:getHistory', () => {
+  ipcMain.handle('filefling:getHistory', () => {
     return getHistory()
   })
 
-  ipcMain.handle('fling:clearHistory', () => {
+  ipcMain.handle('filefling:clearHistory', () => {
     clearHistory()
   })
 }

@@ -37,7 +37,7 @@ export default function SettingsPanel({
 
   const handleSave = async () => {
     if (!draft) return
-    const updated = await window.fling.updateSettings(draft)
+    const updated = await window.filefling.updateSettings(draft)
     setDraft(updated)
     onSettingsUpdated(updated)
     setSaved(true)

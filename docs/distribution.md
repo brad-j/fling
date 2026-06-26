@@ -1,6 +1,6 @@
 # Direct macOS distribution
 
-Fling is distributed outside the Mac App Store. The release flow uses
+FileFling is distributed outside the Mac App Store. The release flow uses
 `electron-builder` to create a `.dmg` and `.zip`.
 
 ## What works without an Apple Developer account
@@ -72,7 +72,7 @@ Before publishing a public release:
 3. Run `pnpm security:audit`.
 4. Run `pnpm release:check`.
 5. Run `pnpm test:e2e`.
-6. Run `pnpm pack:mac` and launch `release/mac*/Fling.app`.
+6. Run `pnpm pack:mac` and launch `release/mac*/FileFling.app`.
 7. Run `pnpm dist:mac` with signing/notarization credentials.
 8. Test the generated DMG on a clean macOS user account or another Mac.
 9. Upload the DMG/ZIP to GitHub Releases or your website.

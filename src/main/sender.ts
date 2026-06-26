@@ -24,7 +24,7 @@ export function onStatus(callback: (progress: SendProgress) => void): void {
 function broadcastStatus(progress: SendProgress): void {
   emitter.emit('status', progress)
   if (statusWindow && !statusWindow.isDestroyed()) {
-    statusWindow.webContents.send('fling:status', progress)
+    statusWindow.webContents.send('filefling:status', progress)
   }
 }
 
@@ -65,7 +65,7 @@ export async function sendFile(opts: {
   if (!settings.host.trim() || !settings.username.trim() || !settings.remotePath.trim() || !settings.keyPath.trim()) {
     const error = 'Configure host, username, remote path, and SSH key path before sending'
     broadcastStatus({ status: 'error', error })
-    notify('Fling — Setup required', error)
+    notify('FileFling — Setup required', error)
     return
   }
 
@@ -77,7 +77,7 @@ export async function sendFile(opts: {
     const latest = getLatestScreenshot()
     if (!latest) {
       broadcastStatus({ status: 'error', error: 'No screenshots found' })
-      notify('Fling — Error', 'No screenshots found in your screenshot directory')
+      notify('FileFling — Error', 'No screenshots found in your screenshot directory')
       return
     }
     localPath = latest
@@ -99,7 +99,7 @@ export async function sendFile(opts: {
     clipboard.writeText(result.remotePath)
 
     // Notify
-    notify('Fling — Sent', `${remoteFilename} → ${settings.host}`)
+    notify('FileFling — Sent', `${remoteFilename} → ${settings.host}`)
     broadcastStatus({ status: 'success', filename: remoteFilename, remotePath: result.remotePath })
 
     // Add to history
@@ -113,7 +113,7 @@ export async function sendFile(opts: {
     addHistoryItem(historyItem)
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : String(err)
-    notify('Fling — Error', `Failed to send ${remoteFilename}: ${errorMsg}`)
+    notify('FileFling — Error', `Failed to send ${remoteFilename}: ${errorMsg}`)
     broadcastStatus({ status: 'error', filename: remoteFilename, error: errorMsg })
 
     const historyItem: HistoryItem = {

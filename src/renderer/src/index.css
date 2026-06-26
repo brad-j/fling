@@ -38,7 +38,7 @@ select {
 
 /* ─── Themes ─────────────────────────────────────────────────────── */
 
-.fling-window[data-theme='terminal'] {
+.filefling-window[data-theme='terminal'] {
   color-scheme: dark;
   --window-bg: rgba(0, 5, 2, 0.96);
   --window-border: rgba(0, 255, 102, 0.22);
@@ -70,7 +70,7 @@ select {
   --scanline-dark: rgba(0, 0, 0, 0.045);
 }
 
-.fling-window[data-theme='graphite'] {
+.filefling-window[data-theme='graphite'] {
   color-scheme: dark;
   --window-bg: rgba(10, 11, 12, 0.97);
   --window-border: rgba(212, 212, 216, 0.18);
@@ -102,7 +102,7 @@ select {
   --scanline-dark: rgba(0, 0, 0, 0.045);
 }
 
-.fling-window[data-theme='light'] {
+.filefling-window[data-theme='light'] {
   color-scheme: light;
   --window-bg: rgba(246, 246, 244, 0.98);
   --window-border: rgba(38, 38, 38, 0.16);
@@ -136,7 +136,7 @@ select {
 
 /* ─── Window Frame ───────────────────────────────────────────────── */
 
-.fling-window {
+.filefling-window {
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -149,7 +149,7 @@ select {
   box-shadow: var(--window-shadow);
 }
 
-.fling-window::before {
+.filefling-window::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -160,7 +160,7 @@ select {
   opacity: 0.7;
 }
 
-.fling-window > * {
+.filefling-window > * {
   position: relative;
   z-index: 1;
 }

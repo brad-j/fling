@@ -1,10 +1,10 @@
-# Fling
+# FileFling
 
-A macOS menubar app for flinging files (especially screenshots) to a remote machine over SSH.
+A macOS menubar app for flinging files — especially screenshots — to a remote machine over SSH.
 
 ## Why
 
-Built for the workflow of talking to a CLI AI agent on a remote machine (via SSH/tmux) and needing to quickly share screenshots from your local Mac. Fling sends the file via SSH/SFTP and copies the remote path to your clipboard so you can paste it straight into the conversation.
+Built for the workflow of talking to a CLI AI agent on a remote machine via SSH/tmux and needing to quickly share screenshots from your local Mac. FileFling sends the file via SSH/SFTP and copies the remote path to your clipboard so you can paste it straight into the conversation.
 
 ## Features
 

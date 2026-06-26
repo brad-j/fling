@@ -6,7 +6,7 @@ import type { Plugin } from 'vite'
 
 function mainIconAssetsPlugin(): Plugin {
   return {
-    name: 'fling-main-icon-assets',
+    name: 'filefling-main-icon-assets',
     generateBundle() {
       const iconsDir = resolve(__dirname, 'src/main/icons')
       if (!existsSync(iconsDir)) return

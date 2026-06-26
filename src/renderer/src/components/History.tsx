@@ -48,7 +48,7 @@ export default function History({
         </h2>
         <button
           onClick={async () => {
-            await window.fling.clearHistory()
+            await window.filefling.clearHistory()
             onClear()
           }}
           className="theme-link text-[10px] transition-colors"

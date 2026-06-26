@@ -7,6 +7,7 @@ describe('IPC validation', () => {
       host: ' server-name ',
       port: '2222',
       username: 'alice',
+      sshConfigHost: 'devbox',
       theme: 'light',
       onboardingComplete: true,
       ignored: 'value'
@@ -14,6 +15,7 @@ describe('IPC validation', () => {
       host: 'server-name',
       port: 2222,
       username: 'alice',
+      sshConfigHost: 'devbox',
       theme: 'light',
       onboardingComplete: true
     })

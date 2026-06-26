@@ -40,6 +40,7 @@ const store = new Store<{
       username: userInfo().username,
       remotePath: '~/shared',
       keyPath: '',
+      sshConfigHost: '',
       screenshotDir: join(homedir(), 'Desktop', 'screenshots'),
       autoCleanupDays: 7,
       theme: 'terminal',
@@ -69,6 +70,11 @@ function migrateSettings(settings: FlingSettings): FlingSettings {
 
   if (!isAppTheme(migrated.theme)) {
     migrated = { ...migrated, theme: 'terminal' }
+    changed = true
+  }
+
+  if (typeof migrated.sshConfigHost !== 'string') {
+    migrated = { ...migrated, sshConfigHost: '' }
     changed = true
   }
 

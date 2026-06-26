@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { ConnectionTestResult, FlingSettings, HistoryItem, HostKeyRecord, SendProgress } from '../main/types'
+import type { ConnectionTestResult, FlingSettings, HistoryItem, HostKeyRecord, SendProgress, SshConfigHost } from '../main/types'
 
 const api = {
   sendFile: (opts: { filePath?: string; isScreenshot?: boolean }) =>
@@ -19,6 +19,9 @@ const api = {
 
   forgetHostKey: (hostKeyId: string): Promise<void> =>
     ipcRenderer.invoke('filefling:forgetHostKey', hostKeyId),
+
+  getSshConfigHosts: (): Promise<SshConfigHost[]> =>
+    ipcRenderer.invoke('filefling:getSshConfigHosts'),
 
   getHistory: (): Promise<HistoryItem[]> =>
     ipcRenderer.invoke('filefling:getHistory'),

@@ -8,6 +8,7 @@ interface Window {
     testConnection: (patch: Partial<import('../../main/types').FlingSettings>) => Promise<import('../../main/types').ConnectionTestResult>
     getHostKeys: () => Promise<import('../../main/types').HostKeyRecord[]>
     forgetHostKey: (hostKeyId: string) => Promise<void>
+    getSshConfigHosts: () => Promise<import('../../main/types').SshConfigHost[]>
     getHistory: () => Promise<import('../../main/types').HistoryItem[]>
     clearHistory: () => Promise<void>
     getPathForFile: (file: File) => string

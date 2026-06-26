@@ -8,10 +8,21 @@ export interface FlingSettings {
   username: string
   remotePath: string
   keyPath: string
+  sshConfigHost: string
   screenshotDir: string
   autoCleanupDays: number
   theme: AppTheme
   onboardingComplete: boolean
+}
+
+export interface SshConfigHost {
+  alias: string
+  hostName: string
+  user?: string
+  port?: number
+  identityFile?: string
+  sourcePath?: string
+  warnings: string[]
 }
 
 export interface HistoryItem {

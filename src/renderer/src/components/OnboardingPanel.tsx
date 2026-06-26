@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { ConnectionTestResult, FlingSettings } from '../../../main/types'
+import type { ConnectionTestResult, FlingSettings, SshConfigHost } from '../../../main/types'
 
 type OnboardingStep = 'welcome' | 'connection' | 'test'
 
@@ -36,6 +36,7 @@ export default function OnboardingPanel({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null)
+  const [sshConfigHosts, setSshConfigHosts] = useState<SshConfigHost[]>([])
 
   useEffect(() => {
     setDraft(settings)
@@ -43,6 +44,10 @@ export default function OnboardingPanel({
       setStep('test')
     }
   }, [settings])
+
+  useEffect(() => {
+    window.filefling.getSshConfigHosts().then(setSshConfigHosts)
+  }, [])
 
   const missing = useMemo(() => draft ? missingFields(draft) : [], [draft])
   const canContinue = missing.length === 0 && !saving && !testing
@@ -52,6 +57,29 @@ export default function OnboardingPanel({
     setDraft({ ...draft, [field]: value })
     setTestResult(null)
     setError(null)
+  }
+
+  const applySshConfigHost = (alias: string) => {
+    if (!draft) return
+    setTestResult(null)
+    setError(null)
+
+    if (!alias) {
+      setDraft({ ...draft, sshConfigHost: '' })
+      return
+    }
+
+    const configHost = sshConfigHosts.find((host) => host.alias === alias)
+    if (!configHost) return
+
+    setDraft({
+      ...draft,
+      sshConfigHost: configHost.alias,
+      host: configHost.hostName || configHost.alias,
+      username: configHost.user || draft.username,
+      port: configHost.port || draft.port,
+      keyPath: configHost.identityFile || draft.keyPath
+    })
   }
 
   const saveDraft = async (onboardingComplete: boolean): Promise<FlingSettings | null> => {
@@ -185,6 +213,12 @@ export default function OnboardingPanel({
 
       {step === 'connection' && (
         <section className="flex flex-col gap-3">
+          <SshConfigPicker
+            hosts={sshConfigHosts}
+            selectedAlias={draft.sshConfigHost}
+            onSelect={applySshConfigHost}
+          />
+
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2">
               <Field
@@ -309,6 +343,51 @@ export default function OnboardingPanel({
         <p className="theme-status-error text-[10px] leading-relaxed">{error}</p>
       )}
     </div>
+  )
+}
+
+function SshConfigPicker({
+  hosts,
+  selectedAlias,
+  onSelect
+}: {
+  hosts: SshConfigHost[]
+  selectedAlias: string
+  onSelect: (alias: string) => void
+}) {
+  if (hosts.length === 0) {
+    return (
+      <div className="theme-dropzone rounded-lg border px-2.5 py-2">
+        <p className="theme-muted-soft text-[10px] leading-relaxed">
+          No concrete hosts found in ~/.ssh/config. Enter SSH details manually.
+        </p>
+      </div>
+    )
+  }
+
+  const selectedHost = hosts.find((host) => host.alias === selectedAlias)
+
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="theme-muted text-[10px] font-medium tracking-wide">SSH Config Host</span>
+      <select
+        value={selectedAlias}
+        onChange={(event) => onSelect(event.target.value)}
+        className="theme-input border rounded-lg px-2.5 py-1.5 text-xs font-mono transition-all focus:outline-none"
+      >
+        <option value="">Manual settings</option>
+        {hosts.map((host) => (
+          <option key={host.alias} value={host.alias}>
+            {host.alias} → {host.hostName}{host.user ? ` (${host.user})` : ''}
+          </option>
+        ))}
+      </select>
+      {selectedHost && (
+        <p className="theme-muted-soft text-[9px] leading-relaxed truncate">
+          Applies HostName, User, Port, and first IdentityFile from {selectedHost.sourcePath || '~/.ssh/config'}.
+        </p>
+      )}
+    </label>
   )
 }
 

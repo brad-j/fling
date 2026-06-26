@@ -7,6 +7,7 @@ const SETTINGS_KEYS = new Set<keyof FlingSettings>([
   'username',
   'remotePath',
   'keyPath',
+  'sshConfigHost',
   'screenshotDir',
   'autoCleanupDays',
   'theme',
@@ -77,6 +78,13 @@ export function validateSettingsPatch(value: unknown): Partial<FlingSettings> {
         break
       case 'keyPath':
         patch.keyPath = assertReasonableString(rawValue, key)
+        break
+      case 'sshConfigHost':
+        if (rawValue === '') {
+          patch.sshConfigHost = ''
+        } else {
+          patch.sshConfigHost = assertReasonableString(rawValue, key)
+        }
         break
       case 'screenshotDir':
         patch.screenshotDir = assertReasonableString(rawValue, key)

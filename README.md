@@ -26,6 +26,7 @@ Example pasted value:
 - **SSH/SFTP transport** — uses the Node `ssh2` library; no external `scp` binary required.
 - **First-run onboarding** — guided setup flow for SSH destination details.
 - **Connection test upload** — onboarding can run a real test upload and cleanup before finishing setup.
+- **SSH config import** — select concrete hosts from `~/.ssh/config` to fill host, user, port, and identity file.
 - **Auto-copy remote path** — successful sends copy the remote path to the clipboard.
 - **Send history** — keeps the last 10 sends; click a successful item to copy its path again.
 - **TOFU host key verification** — trusts on first use and verifies future connections against stored host key metadata.
@@ -38,8 +39,9 @@ Example pasted value:
 
 On first launch, FileFling opens a setup flow instead of dropping users into an empty app.
 
-The onboarding flow collects:
+The onboarding flow can import a concrete host from `~/.ssh/config`, or collect values manually:
 
+- SSH config host alias, optional
 - Host
 - Port
 - Username
@@ -70,6 +72,7 @@ Main settings:
 
 | Setting | Purpose |
 | --- | --- |
+| SSH Config Host | Optional alias imported from `~/.ssh/config`. |
 | Host | SSH host, Tailscale hostname/IP, or server name. |
 | Port | SSH port, usually `22`. |
 | Username | Remote SSH username. |
@@ -83,6 +86,33 @@ The local app store is typically located at:
 ```text
 ~/Library/Application Support/filefling/filefling.json
 ```
+
+## SSH config support
+
+FileFling can read concrete host aliases from `~/.ssh/config` and included config files.
+
+Supported directives:
+
+- `Host`
+- `HostName`
+- `User`
+- `Port`
+- first `IdentityFile`
+- `Include`, including simple wildcard includes such as `~/.ssh/conf.d/*.conf`
+
+Example:
+
+```sshconfig
+Host devbox
+  HostName 100.64.1.2
+  User brad
+  Port 22
+  IdentityFile ~/.ssh/id_ed25519
+```
+
+Selecting `devbox` fills the connection fields with the resolved host, username, port, and key path. FileFling still performs uploads through its own `ssh2` transport; advanced OpenSSH options such as `ProxyJump`, `Match`, agent forwarding, and custom `ProxyCommand` are not applied yet.
+
+Wildcard hosts such as `Host *.internal` are ignored in the picker because they are patterns, not concrete destinations.
 
 ## Screenshot and filename behavior
 

@@ -76,6 +76,7 @@ Renderer hardening:
 - Content Security Policy in `src/renderer/index.html`
 - preload exposes only a small `window.filefling` API
 - main-process IPC handlers validate renderer input
+- SSH config import exposes parsed concrete host aliases only through the preload bridge
 
 ## SSH/path handling in place
 
@@ -94,5 +95,6 @@ These should be handled before a broad launch, even if they are not blockers for
 
 - Consider adding the connection test action to Settings for post-onboarding edits.
 - Consider adding an explicit confirmation dialog before trusting a first-seen host key.
+- Consider supporting advanced SSH config options only with explicit security review, especially `ProxyCommand` and `Match`.
 - Keep Electron patched; `pnpm security:audit` must pass before release.
 - Revisit macOS entitlements after signing. Keep them as narrow as possible while still supporting Electron and native modules.

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { APP_THEMES, type AppTheme, type FlingSettings, type HostKeyRecord } from '../../../main/types'
+import { APP_THEMES, type AppTheme, type FlingSettings, type HostKeyRecord, type SshConfigHost } from '../../../main/types'
 
 const THEME_LABELS: Record<AppTheme, string> = {
   terminal: 'Terminal Green',
@@ -19,6 +19,7 @@ export default function SettingsPanel({
   const [draft, setDraft] = useState<FlingSettings | null>(settings)
   const [saved, setSaved] = useState(false)
   const [hostKeys, setHostKeys] = useState<HostKeyRecord[]>([])
+  const [sshConfigHosts, setSshConfigHosts] = useState<SshConfigHost[]>([])
 
   useEffect(() => {
     setDraft(settings)
@@ -26,6 +27,7 @@ export default function SettingsPanel({
 
   useEffect(() => {
     window.filefling.getHostKeys().then(setHostKeys)
+    window.filefling.getSshConfigHosts().then(setSshConfigHosts)
   }, [])
 
   const refreshHostKeys = async () => {
@@ -40,6 +42,26 @@ export default function SettingsPanel({
   const handleChange = (field: keyof FlingSettings, value: string | number) => {
     if (!draft) return
     setDraft({ ...draft, [field]: value })
+  }
+
+  const applySshConfigHost = (alias: string) => {
+    if (!draft) return
+    if (!alias) {
+      setDraft({ ...draft, sshConfigHost: '' })
+      return
+    }
+
+    const configHost = sshConfigHosts.find((host) => host.alias === alias)
+    if (!configHost) return
+
+    setDraft({
+      ...draft,
+      sshConfigHost: configHost.alias,
+      host: configHost.hostName || configHost.alias,
+      username: configHost.user || draft.username,
+      port: configHost.port || draft.port,
+      keyPath: configHost.identityFile || draft.keyPath
+    })
   }
 
   const handleThemeChange = (theme: AppTheme) => {
@@ -79,6 +101,12 @@ export default function SettingsPanel({
       <h2 className="theme-section-title text-xs font-semibold uppercase tracking-[0.2em]">
         Connection
       </h2>
+
+      <SshConfigPicker
+        hosts={sshConfigHosts}
+        selectedAlias={draft.sshConfigHost}
+        onSelect={applySshConfigHost}
+      />
 
       <Field
         label="Host"
@@ -143,6 +171,51 @@ export default function SettingsPanel({
         {saved ? '✓ Saved' : 'Save Settings'}
       </button>
     </div>
+  )
+}
+
+function SshConfigPicker({
+  hosts,
+  selectedAlias,
+  onSelect
+}: {
+  hosts: SshConfigHost[]
+  selectedAlias: string
+  onSelect: (alias: string) => void
+}) {
+  if (hosts.length === 0) {
+    return (
+      <div className="theme-dropzone rounded-lg border px-2.5 py-2">
+        <p className="theme-muted-soft text-[10px] leading-relaxed">
+          No concrete hosts found in ~/.ssh/config. You can still enter SSH details manually.
+        </p>
+      </div>
+    )
+  }
+
+  const selectedHost = hosts.find((host) => host.alias === selectedAlias)
+
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="theme-muted text-[10px] font-medium tracking-wide">SSH Config Host</span>
+      <select
+        value={selectedAlias}
+        onChange={(event) => onSelect(event.target.value)}
+        className="theme-input border rounded-lg px-2.5 py-1.5 text-xs font-mono transition-all focus:outline-none"
+      >
+        <option value="">Manual settings</option>
+        {hosts.map((host) => (
+          <option key={host.alias} value={host.alias}>
+            {host.alias} → {host.hostName}{host.user ? ` (${host.user})` : ''}
+          </option>
+        ))}
+      </select>
+      {selectedHost && (
+        <p className="theme-muted-soft text-[9px] leading-relaxed truncate">
+          Applies HostName, User, Port, and first IdentityFile from {selectedHost.sourcePath || '~/.ssh/config'}.
+        </p>
+      )}
+    </label>
   )
 }
 

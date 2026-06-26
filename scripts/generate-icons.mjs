@@ -21,6 +21,12 @@ const SUPERSAMPLE = 4
 const VIEWBOX = 32
 const TRAY_STROKE_WIDTH = 2.5
 
+// Keep the packaged macOS icon visually identical to the website favicon:
+// dark rounded square, green north-east fling arrow.
+const APP_ICON_VIEWBOX = 64
+const APP_ICON_CORNER_RADIUS = 16
+const APP_ICON_STROKE_WIDTH = 5
+
 const STATES = [
   { name: 'idleTemplate', color: '#000000' },
   { name: 'sending', color: '#b6ff3b' },
@@ -29,13 +35,20 @@ const STATES = [
 ]
 
 const SEGMENTS = [
-  // Arrow shaft
+  // Tray icon: upload arrow shaft
   [16, 4, 16, 22],
-  // Arrow head
+  // Tray icon: upload arrow head
   [8, 12, 16, 4],
   [16, 4, 24, 12],
-  // Base line
+  // Tray icon: base line
   [6, 26, 26, 26]
+]
+
+const APP_ICON_SEGMENTS = [
+  // Website favicon path: M16 48L48 16M30 16H48V34
+  [16, 48, 48, 16],
+  [30, 16, 48, 16],
+  [48, 16, 48, 34]
 ]
 
 function clamp(value, min = 0, max = 1) {
@@ -74,6 +87,18 @@ function lineCoverageAt(viewX, viewY, strokeWidth) {
   for (const [x1, y1, x2, y2] of SEGMENTS) {
     const distance = distanceToSegment(viewX, viewY, x1, y1, x2, y2)
     alpha = Math.max(alpha, clamp(radius + 0.5 - distance))
+  }
+
+  return alpha
+}
+
+function segmentCoverageAt(segments, viewX, viewY, strokeWidth, antialiasWidth) {
+  const radius = strokeWidth / 2
+  let alpha = 0
+
+  for (const [x1, y1, x2, y2] of segments) {
+    const distance = distanceToSegment(viewX, viewY, x1, y1, x2, y2)
+    alpha = Math.max(alpha, clamp((radius + antialiasWidth - distance) / (2 * antialiasWidth)))
   }
 
   return alpha
@@ -128,37 +153,60 @@ function roundedRectAlpha(x, y, size, radius) {
 }
 
 function drawAppIcon(size) {
-  const top = parseHexColor('#00ff66')
-  const bottom = parseHexColor('#020802')
+  const bg = parseHexColor('#04070a')
+  const glyph = parseHexColor('#34f5a0')
+  const hiSize = size * SUPERSAMPLE
+  const hi = Buffer.alloc(hiSize * hiSize * 4)
+  const rectRadius = hiSize * (APP_ICON_CORNER_RADIUS / APP_ICON_VIEWBOX)
+  const viewUnitsPerHiPixel = APP_ICON_VIEWBOX / hiSize
+  const antialiasWidth = viewUnitsPerHiPixel * 0.75
+
+  for (let y = 0; y < hiSize; y++) {
+    for (let x = 0; x < hiSize; x++) {
+      const viewX = ((x + 0.5) / hiSize) * APP_ICON_VIEWBOX
+      const viewY = ((y + 0.5) / hiSize) * APP_ICON_VIEWBOX
+      const rectAlpha = roundedRectAlpha(x + 0.5, y + 0.5, hiSize, rectRadius)
+      const glyphAlpha = segmentCoverageAt(
+        APP_ICON_SEGMENTS,
+        viewX,
+        viewY,
+        APP_ICON_STROKE_WIDTH,
+        antialiasWidth
+      ) * rectAlpha
+
+      const i = (y * hiSize + x) * 4
+      hi[i] = lerp(bg.r, glyph.r, glyphAlpha)
+      hi[i + 1] = lerp(bg.g, glyph.g, glyphAlpha)
+      hi[i + 2] = lerp(bg.b, glyph.b, glyphAlpha)
+      hi[i + 3] = Math.round(rectAlpha * 255)
+    }
+  }
+
   const rgba = Buffer.alloc(size * size * 4)
-  const radius = size * 0.225
-  const glyphSize = size * 0.58
-  const glyphLeft = (size - glyphSize) / 2
-  const glyphTop = size * 0.18
-  const strokeWidth = 3.1
+  const samples = SUPERSAMPLE * SUPERSAMPLE
 
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const t = y / Math.max(1, size - 1)
-      const bg = {
-        r: lerp(top.r, bottom.r, t),
-        g: lerp(top.g, bottom.g, t),
-        b: lerp(top.b, bottom.b, t)
+      let r = 0
+      let g = 0
+      let b = 0
+      let a = 0
+
+      for (let sy = 0; sy < SUPERSAMPLE; sy++) {
+        for (let sx = 0; sx < SUPERSAMPLE; sx++) {
+          const hiIndex = (((y * SUPERSAMPLE + sy) * hiSize) + (x * SUPERSAMPLE + sx)) * 4
+          r += hi[hiIndex]
+          g += hi[hiIndex + 1]
+          b += hi[hiIndex + 2]
+          a += hi[hiIndex + 3]
+        }
       }
 
-      const alpha = roundedRectAlpha(x + 0.5, y + 0.5, size, radius)
-      const viewX = ((x + 0.5 - glyphLeft) / glyphSize) * VIEWBOX
-      const viewY = ((y + 0.5 - glyphTop) / glyphSize) * VIEWBOX
-      const glyphAlpha = viewX >= 0 && viewX <= VIEWBOX && viewY >= 0 && viewY <= VIEWBOX
-        ? lineCoverageAt(viewX, viewY, strokeWidth)
-        : 0
-
       const i = (y * size + x) * 4
-      const whiteMix = glyphAlpha * alpha
-      rgba[i] = lerp(bg.r, 255, whiteMix)
-      rgba[i + 1] = lerp(bg.g, 255, whiteMix)
-      rgba[i + 2] = lerp(bg.b, 255, whiteMix)
-      rgba[i + 3] = Math.round(alpha * 255)
+      rgba[i] = Math.round(r / samples)
+      rgba[i + 1] = Math.round(g / samples)
+      rgba[i + 2] = Math.round(b / samples)
+      rgba[i + 3] = Math.round(a / samples)
     }
   }
 

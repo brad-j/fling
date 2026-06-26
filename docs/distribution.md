@@ -84,8 +84,7 @@ See `docs/security.md` for the detailed testing and security checklist.
 These are not packaging blockers, but they will matter for non-technical users:
 
 - Add a first-run setup/test-connection flow.
-- Replace personal defaults (`zedd`, `brad`, `~/.ssh/zedd`) with onboarding or
-  blank defaults for public builds.
+- Add onboarding or clearer empty-state guidance for first-run settings.
 - Make SSH errors friendlier: missing key, bad permissions, host unreachable,
   auth failed, remote path not writable, host key mismatch.
 - Consider auto-update after the first public release.

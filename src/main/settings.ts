@@ -4,16 +4,6 @@ import { homedir, userInfo } from 'os'
 import { join } from 'path'
 import { APP_THEMES, type AppTheme, type FlingSettings, type HistoryItem } from './types'
 
-const ZEDD_KEY_DIR = join(homedir(), '.ssh', 'zedd')
-const ZEDD_KEY_PATH = join(ZEDD_KEY_DIR, 'id_ed25519')
-
-const DEFAULT_KEY_PATHS = [
-  ZEDD_KEY_PATH,
-  join(ZEDD_KEY_DIR, 'id_rsa'),
-  join(homedir(), '.ssh', 'id_ed25519'),
-  join(homedir(), '.ssh', 'id_rsa')
-]
-
 function isFile(path: string): boolean {
   try {
     return statSync(path).isFile()
@@ -34,13 +24,6 @@ function resolveHomePath(path: string): string {
   return path.startsWith('~/') ? join(homedir(), path.slice(2)) : path
 }
 
-function detectKeyPath(): string {
-  for (const p of DEFAULT_KEY_PATHS) {
-    if (isFile(p)) return p
-  }
-  return ZEDD_KEY_PATH
-}
-
 const store = new Store<{
   settings: FlingSettings
   history: HistoryItem[]
@@ -53,7 +36,7 @@ const store = new Store<{
       port: 22,
       username: userInfo().username,
       remotePath: '~/shared',
-      keyPath: detectKeyPath(),
+      keyPath: '',
       screenshotDir: join(homedir(), 'Desktop', 'screenshots'),
       autoCleanupDays: 7,
       theme: 'terminal'
@@ -67,24 +50,8 @@ function isAppTheme(value: unknown): value is AppTheme {
   return typeof value === 'string' && APP_THEMES.includes(value as AppTheme)
 }
 
-function migrateDetectedKeyPath(settings: FlingSettings): FlingSettings {
-  const resolvedKeyPath = resolveHomePath(settings.keyPath)
-  const genericKeyPaths = new Set(DEFAULT_KEY_PATHS.filter((p) => p !== ZEDD_KEY_PATH))
-
-  if (
-    isFile(ZEDD_KEY_PATH) &&
-    (resolvedKeyPath === ZEDD_KEY_DIR || isDirectory(resolvedKeyPath) || genericKeyPaths.has(resolvedKeyPath))
-  ) {
-    const migrated = { ...settings, keyPath: ZEDD_KEY_PATH }
-    store.set('settings', migrated)
-    return migrated
-  }
-
-  return settings
-}
-
 function migrateSettings(settings: FlingSettings): FlingSettings {
-  let migrated = migrateDetectedKeyPath(settings)
+  let migrated = settings
 
   if (!isAppTheme(migrated.theme)) {
     migrated = { ...migrated, theme: 'terminal' }

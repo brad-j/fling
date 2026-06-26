@@ -1,23 +1,29 @@
-// Generate the Fling tray PNG icons without relying on Electron/Chromium SVG
-// rendering. Electron's nativeImage.createFromDataURL() does not rasterize SVG
-// reliably on macOS, so the app loads these PNG assets instead.
+// Generate Fling's tray PNG icons and packaged macOS app icon without relying
+// on Electron/Chromium SVG rendering. Electron's nativeImage.createFromDataURL()
+// does not rasterize SVG reliably on macOS, so the app loads generated PNG
+// assets instead.
 //
 // Usage: pnpm icons:generate
 
 import { deflateSync } from 'zlib'
-import { mkdirSync, writeFileSync } from 'fs'
+import { mkdirSync, rmSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
+import { spawnSync } from 'child_process'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const OUT_DIR = join(__dirname, '..', 'src', 'main', 'icons')
+const ROOT = join(__dirname, '..')
+const TRAY_OUT_DIR = join(ROOT, 'src', 'main', 'icons')
+const BUILD_DIR = join(ROOT, 'build')
+const ICONSET_DIR = join(BUILD_DIR, 'icon.iconset')
+const APP_ICON = join(BUILD_DIR, 'icon.icns')
 const SUPERSAMPLE = 4
 const VIEWBOX = 32
-const STROKE_WIDTH = 2.5
+const TRAY_STROKE_WIDTH = 2.5
 
 const STATES = [
   { name: 'idleTemplate', color: '#000000' },
-  { name: 'sending', color: '#6366f1' },
+  { name: 'sending', color: '#b6ff3b' },
   { name: 'success', color: '#22c55e' },
   { name: 'error', color: '#ef4444' }
 ]
@@ -32,6 +38,10 @@ const SEGMENTS = [
   [6, 26, 26, 26]
 ]
 
+function clamp(value, min = 0, max = 1) {
+  return Math.max(min, Math.min(max, value))
+}
+
 function parseHexColor(hex) {
   const value = hex.replace('#', '')
   return {
@@ -39,6 +49,10 @@ function parseHexColor(hex) {
     g: Number.parseInt(value.slice(2, 4), 16),
     b: Number.parseInt(value.slice(4, 6), 16)
   }
+}
+
+function lerp(a, b, t) {
+  return Math.round(a + (b - a) * t)
 }
 
 function distanceToSegment(px, py, x1, y1, x2, y2) {
@@ -53,17 +67,19 @@ function distanceToSegment(px, py, x1, y1, x2, y2) {
   return Math.hypot(px - x, py - y)
 }
 
-function coverageAt(viewX, viewY) {
-  const radius = STROKE_WIDTH / 2
+function lineCoverageAt(viewX, viewY, strokeWidth) {
+  const radius = strokeWidth / 2
+  let alpha = 0
+
   for (const [x1, y1, x2, y2] of SEGMENTS) {
-    if (distanceToSegment(viewX, viewY, x1, y1, x2, y2) <= radius) {
-      return 1
-    }
+    const distance = distanceToSegment(viewX, viewY, x1, y1, x2, y2)
+    alpha = Math.max(alpha, clamp(radius + 0.5 - distance))
   }
-  return 0
+
+  return alpha
 }
 
-function drawIcon(size, hexColor) {
+function drawTrayIcon(size, hexColor) {
   const { r, g, b } = parseHexColor(hexColor)
   const hiSize = size * SUPERSAMPLE
   const hi = new Uint8ClampedArray(hiSize * hiSize)
@@ -72,7 +88,7 @@ function drawIcon(size, hexColor) {
     for (let x = 0; x < hiSize; x++) {
       const viewX = ((x + 0.5) / hiSize) * VIEWBOX
       const viewY = ((y + 0.5) / hiSize) * VIEWBOX
-      hi[y * hiSize + x] = coverageAt(viewX, viewY) * 255
+      hi[y * hiSize + x] = lineCoverageAt(viewX, viewY, TRAY_STROKE_WIDTH) * 255
     }
   }
 
@@ -95,6 +111,54 @@ function drawIcon(size, hexColor) {
       rgba[i + 1] = g
       rgba[i + 2] = b
       rgba[i + 3] = Math.round(alphaSum / samples)
+    }
+  }
+
+  return rgba
+}
+
+function roundedRectAlpha(x, y, size, radius) {
+  const half = size / 2
+  const qx = Math.abs(x - half) - (half - radius)
+  const qy = Math.abs(y - half) - (half - radius)
+  const outside = Math.hypot(Math.max(qx, 0), Math.max(qy, 0))
+  const inside = Math.min(Math.max(qx, qy), 0)
+  const signedDistance = outside + inside - radius
+  return clamp(0.5 - signedDistance)
+}
+
+function drawAppIcon(size) {
+  const top = parseHexColor('#00ff66')
+  const bottom = parseHexColor('#020802')
+  const rgba = Buffer.alloc(size * size * 4)
+  const radius = size * 0.225
+  const glyphSize = size * 0.58
+  const glyphLeft = (size - glyphSize) / 2
+  const glyphTop = size * 0.18
+  const strokeWidth = 3.1
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const t = y / Math.max(1, size - 1)
+      const bg = {
+        r: lerp(top.r, bottom.r, t),
+        g: lerp(top.g, bottom.g, t),
+        b: lerp(top.b, bottom.b, t)
+      }
+
+      const alpha = roundedRectAlpha(x + 0.5, y + 0.5, size, radius)
+      const viewX = ((x + 0.5 - glyphLeft) / glyphSize) * VIEWBOX
+      const viewY = ((y + 0.5 - glyphTop) / glyphSize) * VIEWBOX
+      const glyphAlpha = viewX >= 0 && viewX <= VIEWBOX && viewY >= 0 && viewY <= VIEWBOX
+        ? lineCoverageAt(viewX, viewY, strokeWidth)
+        : 0
+
+      const i = (y * size + x) * 4
+      const whiteMix = glyphAlpha * alpha
+      rgba[i] = lerp(bg.r, 255, whiteMix)
+      rgba[i + 1] = lerp(bg.g, 255, whiteMix)
+      rgba[i + 2] = lerp(bg.b, 255, whiteMix)
+      rgba[i + 3] = Math.round(alpha * 255)
     }
   }
 
@@ -150,14 +214,55 @@ function encodePng(width, height, rgba) {
   ])
 }
 
-mkdirSync(OUT_DIR, { recursive: true })
+function writePng(file, size, rgba) {
+  writeFileSync(file, encodePng(size, size, rgba))
+  console.log(`wrote ${file} (${size}x${size})`)
+}
 
-for (const { name, color } of STATES) {
-  for (const size of [16, 32]) {
-    const rgba = drawIcon(size, color)
-    const png = encodePng(size, size, rgba)
-    const file = join(OUT_DIR, `${name}${size === 32 ? '@2x' : ''}.png`)
-    writeFileSync(file, png)
-    console.log(`wrote ${file} (${size}x${size})`)
+function generateTrayIcons() {
+  mkdirSync(TRAY_OUT_DIR, { recursive: true })
+
+  for (const { name, color } of STATES) {
+    for (const size of [16, 32]) {
+      const file = join(TRAY_OUT_DIR, `${name}${size === 32 ? '@2x' : ''}.png`)
+      writePng(file, size, drawTrayIcon(size, color))
+    }
   }
 }
+
+function generateAppIcon() {
+  mkdirSync(BUILD_DIR, { recursive: true })
+  rmSync(ICONSET_DIR, { recursive: true, force: true })
+  mkdirSync(ICONSET_DIR, { recursive: true })
+
+  const iconsetEntries = [
+    ['icon_16x16.png', 16],
+    ['icon_16x16@2x.png', 32],
+    ['icon_32x32.png', 32],
+    ['icon_32x32@2x.png', 64],
+    ['icon_128x128.png', 128],
+    ['icon_128x128@2x.png', 256],
+    ['icon_256x256.png', 256],
+    ['icon_256x256@2x.png', 512],
+    ['icon_512x512.png', 512],
+    ['icon_512x512@2x.png', 1024]
+  ]
+
+  for (const [fileName, size] of iconsetEntries) {
+    writePng(join(ICONSET_DIR, fileName), size, drawAppIcon(size))
+  }
+
+  const result = spawnSync('iconutil', ['-c', 'icns', ICONSET_DIR, '-o', APP_ICON], {
+    stdio: 'inherit'
+  })
+
+  if (result.status !== 0) {
+    throw new Error('iconutil failed to generate build/icon.icns')
+  }
+
+  rmSync(ICONSET_DIR, { recursive: true, force: true })
+  console.log(`wrote ${APP_ICON}`)
+}
+
+generateTrayIcons()
+generateAppIcon()

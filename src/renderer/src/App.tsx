@@ -3,23 +3,37 @@ import DropZone from './components/DropZone'
 import History from './components/History'
 import SettingsPanel from './components/SettingsPanel'
 import { useFlingStatus } from './hooks/useFlingStatus'
-import type { HistoryItem, SendProgress } from '../../main/types'
+import type { AppTheme, FlingSettings, HistoryItem } from '../../main/types'
 
 type View = 'main' | 'settings'
+
+const DEFAULT_THEME: AppTheme = 'terminal'
 
 export default function App() {
   const [view, setView] = useState<View>('main')
   const [history, setHistory] = useState<HistoryItem[]>([])
+  const [settings, setSettings] = useState<FlingSettings | null>(null)
   const { status, progress } = useFlingStatus()
+  const theme = settings?.theme ?? DEFAULT_THEME
+
+  const previewSettings = useCallback((draftSettings: FlingSettings) => {
+    setSettings(draftSettings)
+  }, [])
 
   const refreshHistory = useCallback(async () => {
     const items = await window.fling.getHistory()
     setHistory(items)
   }, [])
 
+  const refreshSettings = useCallback(async () => {
+    const loadedSettings = await window.fling.getSettings()
+    setSettings(loadedSettings)
+  }, [])
+
   useEffect(() => {
     refreshHistory()
-  }, [refreshHistory])
+    refreshSettings()
+  }, [refreshHistory, refreshSettings])
 
   // Refresh history when a send completes
   useEffect(() => {
@@ -30,24 +44,24 @@ export default function App() {
   }, [status, refreshHistory])
 
   return (
-    <div className="fling-window w-full h-full flex flex-col">
+    <div data-theme={theme} className="fling-window w-full h-full flex flex-col">
       {/* ─── Header ─── */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+      <header className="theme-header flex items-center justify-between px-4 py-3 border-b">
         <div className="flex items-center gap-2">
           <FlingLogo state={status} />
-          <h1 className="text-sm font-semibold text-white/90">Fling</h1>
+          <h1 className="theme-title text-sm font-semibold tracking-[0.18em]">FLING</h1>
         </div>
         {view === 'settings' ? (
           <button
             onClick={() => setView('main')}
-            className="text-xs text-white/50 hover:text-white/90 transition-colors"
+            className="theme-link text-xs transition-colors"
           >
             ← Back
           </button>
         ) : (
           <button
             onClick={() => setView('settings')}
-            className="text-white/40 hover:text-white/80 transition-colors"
+            className="theme-icon-button transition-colors"
             title="Settings"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -66,14 +80,18 @@ export default function App() {
             <History items={history} onClear={refreshHistory} />
           </div>
         ) : (
-          <SettingsPanel />
+          <SettingsPanel
+            settings={settings}
+            onSettingsUpdated={setSettings}
+            onSettingsPreview={previewSettings}
+          />
         )}
       </div>
 
       {/* ─── Footer ─── */}
-      <footer className="px-4 py-2 border-t border-white/5">
-        <p className="text-[10px] text-white/30 text-center">
-          ⌘⇧F to fling latest screenshot
+      <footer className="theme-footer px-4 py-2 border-t">
+        <p className="theme-muted-soft text-[10px] text-center tracking-wide">
+          <span className="theme-hotkey">⌘⇧F</span> to fling latest screenshot
         </p>
       </footer>
     </div>
@@ -84,16 +102,22 @@ export default function App() {
 
 function FlingLogo({ state }: { state: string }) {
   const colors: Record<string, string> = {
-    idle: '#8b8b8b',
-    sending: '#6366f1',
-    success: '#22c55e',
-    error: '#ef4444'
+    idle: 'var(--accent)',
+    sending: 'var(--status-sending)',
+    success: 'var(--success)',
+    error: 'var(--error)'
   }
   const color = colors[state] || colors.idle
   const animClass = state === 'sending' ? 'animate-pulse-fast' : ''
 
   return (
-    <svg width="20" height="20" viewBox="0 0 32 32" fill="none" className={animClass}>
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={`${animClass} theme-logo`}
+    >
       <path
         d="M16 4 L16 22 M8 12 L16 4 L24 12"
         stroke={color}

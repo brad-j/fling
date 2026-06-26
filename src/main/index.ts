@@ -78,6 +78,13 @@ function createMenubar(): void {
   mb.on('after-create-window', () => {
     if (mb?.window) {
       setStatusWindow(mb.window)
+
+      mb.window.webContents.on('before-input-event', (event, input) => {
+        if (input.type === 'keyDown' && input.key === 'Escape') {
+          event.preventDefault()
+          mb?.hideWindow()
+        }
+      })
     }
   })
 

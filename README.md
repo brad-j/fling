@@ -43,9 +43,31 @@ pnpm dev
 pnpm build
 ```
 
-## Tray icons
+## Package for macOS
 
-Tray icons are committed as PNG assets under `src/main/icons/`. If the glyph changes, regenerate them with:
+Unsigned local build for testing:
+
+```bash
+pnpm pack:mac
+```
+
+Unsigned DMG/ZIP for testing Gatekeeper-unfriendly direct distribution:
+
+```bash
+pnpm dist:mac:unsigned
+```
+
+Signed/notarized DMG/ZIP once Apple Developer ID credentials are available:
+
+```bash
+pnpm dist:mac
+```
+
+See `docs/distribution.md` for the full direct-distribution checklist.
+
+## Tray/app icons
+
+Tray icons are committed as PNG assets under `src/main/icons/`; the packaged app icon is `build/icon.icns`. If the glyph changes, regenerate them with:
 
 ```bash
 pnpm icons:generate

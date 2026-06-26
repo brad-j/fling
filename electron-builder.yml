@@ -1,0 +1,39 @@
+appId: com.bradj.fling
+productName: Fling
+copyright: Copyright © 2026 brad-j
+
+asar: true
+
+files:
+  - out/**/*
+  - package.json
+
+# ssh2/cpu-features may include native bindings. Keep them unpacked so Electron
+# can load them from the packaged app if present on the user's machine.
+asarUnpack:
+  - node_modules/ssh2/**/*
+  - node_modules/cpu-features/**/*
+
+npmRebuild: true
+nodeGypRebuild: false
+
+mac:
+  category: public.app-category.productivity
+  icon: build/icon.icns
+  artifactName: ${productName}-${version}-${arch}.${ext}
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  target:
+    - dmg
+    - zip
+
+dmg:
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+directories:
+  output: release
+  buildResources: build
+
+afterSign: scripts/notarize.cjs

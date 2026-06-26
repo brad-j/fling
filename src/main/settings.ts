@@ -2,7 +2,7 @@ import Store from 'electron-store'
 import { readFileSync, statSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
-import type { FlingSettings, HistoryItem } from './types'
+import { APP_THEMES, type AppTheme, type FlingSettings, type HistoryItem } from './types'
 
 const ZEDD_KEY_DIR = join(homedir(), '.ssh', 'zedd')
 const ZEDD_KEY_PATH = join(ZEDD_KEY_DIR, 'id_ed25519')
@@ -55,12 +55,17 @@ const store = new Store<{
       remotePath: '~/shared',
       keyPath: detectKeyPath(),
       screenshotDir: join(homedir(), 'Desktop', 'screenshots'),
-      autoCleanupDays: 7
+      autoCleanupDays: 7,
+      theme: 'terminal'
     },
     history: [],
     hostKeys: {}
   }
 })
+
+function isAppTheme(value: unknown): value is AppTheme {
+  return typeof value === 'string' && APP_THEMES.includes(value as AppTheme)
+}
 
 function migrateDetectedKeyPath(settings: FlingSettings): FlingSettings {
   const resolvedKeyPath = resolveHomePath(settings.keyPath)
@@ -78,8 +83,19 @@ function migrateDetectedKeyPath(settings: FlingSettings): FlingSettings {
   return settings
 }
 
+function migrateSettings(settings: FlingSettings): FlingSettings {
+  let migrated = migrateDetectedKeyPath(settings)
+
+  if (!isAppTheme(migrated.theme)) {
+    migrated = { ...migrated, theme: 'terminal' }
+    store.set('settings', migrated)
+  }
+
+  return migrated
+}
+
 export function getSettings(): FlingSettings {
-  return migrateDetectedKeyPath(store.get('settings'))
+  return migrateSettings(store.get('settings'))
 }
 
 export function updateSettings(patch: Partial<FlingSettings>): FlingSettings {

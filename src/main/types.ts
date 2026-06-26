@@ -1,3 +1,7 @@
+export const APP_THEMES = ['terminal', 'graphite', 'light'] as const
+
+export type AppTheme = typeof APP_THEMES[number]
+
 export interface FlingSettings {
   host: string
   port: number
@@ -6,6 +10,7 @@ export interface FlingSettings {
   keyPath: string
   screenshotDir: string
   autoCleanupDays: number
+  theme: AppTheme
 }
 
 export interface HistoryItem {

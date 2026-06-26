@@ -1,43 +1,74 @@
 import { useState, useEffect } from 'react'
-import type { FlingSettings } from '../../../main/types'
+import { APP_THEMES, type AppTheme, type FlingSettings } from '../../../main/types'
 
-export default function SettingsPanel() {
-  const [settings, setSettings] = useState<FlingSettings | null>(null)
+const THEME_LABELS: Record<AppTheme, string> = {
+  terminal: 'Terminal Green',
+  graphite: 'Graphite',
+  light: 'Light'
+}
+
+export default function SettingsPanel({
+  settings,
+  onSettingsUpdated,
+  onSettingsPreview
+}: {
+  settings: FlingSettings | null
+  onSettingsUpdated: (settings: FlingSettings) => void
+  onSettingsPreview: (settings: FlingSettings) => void
+}) {
+  const [draft, setDraft] = useState<FlingSettings | null>(settings)
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    window.fling.getSettings().then(setSettings)
-  }, [])
+    setDraft(settings)
+  }, [settings])
 
   const handleChange = (field: keyof FlingSettings, value: string | number) => {
-    if (!settings) return
-    setSettings({ ...settings, [field]: value })
+    if (!draft) return
+    setDraft({ ...draft, [field]: value })
+  }
+
+  const handleThemeChange = (theme: AppTheme) => {
+    if (!draft) return
+    const updatedDraft = { ...draft, theme }
+    setDraft(updatedDraft)
+    onSettingsPreview(updatedDraft)
   }
 
   const handleSave = async () => {
-    if (!settings) return
-    await window.fling.updateSettings(settings)
+    if (!draft) return
+    const updated = await window.fling.updateSettings(draft)
+    setDraft(updated)
+    onSettingsUpdated(updated)
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
   }
 
-  if (!settings) {
+  if (!draft) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-xs text-white/30">Loading...</p>
+        <p className="theme-muted text-xs animate-pulse">Loading...</p>
       </div>
     )
   }
 
   return (
     <div className="flex flex-col gap-3 p-4 animate-fade-in">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-white/30">
+      <h2 className="theme-section-title text-xs font-semibold uppercase tracking-[0.2em]">
+        Appearance
+      </h2>
+
+      <ThemePicker value={draft.theme} onChange={handleThemeChange} />
+
+      <div className="theme-divider h-px my-1" />
+
+      <h2 className="theme-section-title text-xs font-semibold uppercase tracking-[0.2em]">
         Connection
       </h2>
 
       <Field
         label="Host"
-        value={settings.host}
+        value={draft.host}
         onChange={(v) => handleChange('host', v)}
         placeholder="zedd or 100.x.x.x"
       />
@@ -45,13 +76,13 @@ export default function SettingsPanel() {
       <div className="grid grid-cols-2 gap-2">
         <Field
           label="Port"
-          value={String(settings.port)}
+          value={String(draft.port)}
           onChange={(v) => handleChange('port', parseInt(v) || 22)}
           placeholder="22"
         />
         <Field
           label="Username"
-          value={settings.username}
+          value={draft.username}
           onChange={(v) => handleChange('username', v)}
           placeholder="brad"
         />
@@ -59,45 +90,73 @@ export default function SettingsPanel() {
 
       <Field
         label="Remote Path"
-        value={settings.remotePath}
+        value={draft.remotePath}
         onChange={(v) => handleChange('remotePath', v)}
         placeholder="~/shared"
       />
 
       <Field
         label="SSH Key Path"
-        value={settings.keyPath}
+        value={draft.keyPath}
         onChange={(v) => handleChange('keyPath', v)}
         placeholder="~/.ssh/id_ed25519"
       />
 
-      <div className="h-px bg-white/5 my-1" />
+      <div className="theme-divider h-px my-1" />
 
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-white/30">
+      <h2 className="theme-section-title text-xs font-semibold uppercase tracking-[0.2em]">
         Screenshots
       </h2>
 
       <Field
         label="Screenshot Directory"
-        value={settings.screenshotDir}
+        value={draft.screenshotDir}
         onChange={(v) => handleChange('screenshotDir', v)}
         placeholder="~/Desktop/screenshots"
       />
 
-      <div className="h-px bg-white/5 my-1" />
+      <div className="theme-divider h-px my-1" />
 
       <button
         onClick={handleSave}
         className={`
-          w-full py-2 rounded-lg text-xs font-medium transition-all
-          ${saved
-            ? 'bg-success text-white'
-            : 'bg-accent hover:bg-accent-hover text-white'
-          }
+          w-full py-2 rounded-lg text-xs font-medium tracking-wide transition-all
+          ${saved ? 'theme-secondary-button-saved' : 'theme-secondary-button'}
         `}
       >
         {saved ? '✓ Saved' : 'Save Settings'}
       </button>
+    </div>
+  )
+}
+
+function ThemePicker({
+  value,
+  onChange
+}: {
+  value: AppTheme
+  onChange: (theme: AppTheme) => void
+}) {
+  return (
+    <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Theme">
+      {APP_THEMES.map((theme) => {
+        const selected = theme === value
+        return (
+          <button
+            key={theme}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(theme)}
+            className={`
+              rounded-lg border px-2 py-2 text-[10px] font-medium tracking-wide transition-all
+              ${selected ? 'theme-primary-button' : 'theme-dropzone'}
+            `}
+          >
+            {THEME_LABELS[theme]}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -117,19 +176,13 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] text-white/40 font-medium">{label}</span>
+      <span className="theme-muted text-[10px] font-medium tracking-wide">{label}</span>
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="
-          bg-white/[0.04] border border-white/8 rounded-lg px-2.5 py-1.5
-          text-xs text-white/90 font-mono
-          placeholder:text-white/20
-          focus:outline-none focus:border-accent/50 focus:bg-white/[0.06]
-          transition-all
-        "
+        className="theme-input rounded-lg px-2.5 py-1.5 text-xs font-mono transition-all focus:outline-none"
       />
     </label>
   )

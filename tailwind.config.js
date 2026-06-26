@@ -5,21 +5,26 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'SF Mono', 'monospace']
+        mono: ['JetBrains Mono', 'SF Mono', 'Menlo', 'monospace']
       },
       colors: {
         accent: {
-          DEFAULT: '#6366f1',
-          hover: '#818cf8',
-          active: '#4f46e5'
+          DEFAULT: '#00ff66',
+          hover: '#39ff88',
+          active: '#00cc52'
         },
         surface: {
-          DEFAULT: '#1a1a2e',
-          light: '#242442',
-          lighter: '#2e2e54'
+          DEFAULT: '#020802',
+          light: '#061406',
+          lighter: '#0b250f'
         },
-        success: '#22c55e',
-        error: '#ef4444'
+        phosphor: {
+          dim: '#4f9f66',
+          DEFAULT: '#b6ffc8',
+          bright: '#e4ffe9'
+        },
+        success: '#39ff88',
+        error: '#ff5f56'
       },
       animation: {
         'slide-in': 'slide-in 0.2s ease-out',

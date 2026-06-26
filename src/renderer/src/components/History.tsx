@@ -35,7 +35,7 @@ export default function History({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center gap-1 py-4">
-        <p className="text-[11px] text-white/20">No sends yet</p>
+        <p className="theme-muted-soft text-[11px] tracking-wide">No sends yet</p>
       </div>
     )
   }
@@ -43,7 +43,7 @@ export default function History({
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-white/30">
+        <h2 className="theme-section-title text-[10px] font-semibold uppercase tracking-[0.2em]">
           Recent
         </h2>
         <button
@@ -51,7 +51,7 @@ export default function History({
             await window.fling.clearHistory()
             onClear()
           }}
-          className="text-[10px] text-white/20 hover:text-white/50 transition-colors"
+          className="theme-link text-[10px] transition-colors"
         >
           Clear
         </button>
@@ -64,25 +64,21 @@ export default function History({
           disabled={item.status === 'error'}
           className={`
             group flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all
-            ${item.status === 'error'
-              ? 'opacity-50 cursor-default'
-              : 'hover:bg-white/5 cursor-pointer'
-            }
+            ${item.status === 'error' ? 'theme-history-row-error cursor-default' : 'theme-history-row cursor-pointer'}
           `}
         >
           {/* Status dot */}
           <div
-            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-              item.status === 'success' ? 'bg-success' : 'bg-error'
-            }`}
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: item.status === 'success' ? 'var(--success)' : 'var(--error)' }}
           />
 
           {/* Filename + time */}
           <div className="flex-1 min-w-0 text-left">
-            <p className="text-[11px] text-white/70 truncate font-mono">
+            <p className="theme-text text-[11px] truncate font-mono">
               {item.filename}
             </p>
-            <p className="text-[9px] text-white/30">
+            <p className="theme-muted-soft text-[9px]">
               {formatTime(item.timestamp)}
               {item.status === 'error' && item.error ? ` · ${item.error}` : ''}
             </p>
@@ -92,11 +88,11 @@ export default function History({
           {item.status === 'success' && (
             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
               {copiedId === item.id ? (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               ) : (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/30">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="theme-muted">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                 </svg>

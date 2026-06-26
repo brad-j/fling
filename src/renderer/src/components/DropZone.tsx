@@ -65,10 +65,10 @@ export default function DropZone({
   })()
 
   const statusColor = {
-    idle: 'text-white/50',
-    sending: 'text-accent',
-    success: 'text-success',
-    error: 'text-error'
+    idle: 'theme-status-idle',
+    sending: 'theme-status-sending',
+    success: 'theme-status-success',
+    error: 'theme-status-error'
   }[status]
 
   return (
@@ -81,10 +81,7 @@ export default function DropZone({
         onDrop={handleDrop}
         className={`
           relative rounded-xl border-2 border-dashed transition-all duration-200
-          ${isDragging
-            ? 'border-accent bg-accent/10 scale-[1.02]'
-            : 'border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
-          }
+          ${isDragging ? 'theme-dropzone-dragging scale-[1.02]' : 'theme-dropzone'}
           p-6 flex flex-col items-center justify-center gap-3 cursor-default
         `}
       >
@@ -93,7 +90,7 @@ export default function DropZone({
           height="32"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={isDragging ? '#6366f1' : 'rgba(255,255,255,0.3)'}
+          stroke={isDragging ? 'var(--accent)' : 'var(--muted)'}
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -103,7 +100,7 @@ export default function DropZone({
           <polyline points="17 8 12 3 7 8" />
           <line x1="12" y1="3" x2="12" y2="15" />
         </svg>
-        <p className="text-xs text-white/40">
+        <p className="theme-muted text-xs tracking-wide">
           {isDragging ? 'Release to fling' : 'Drag & drop a file'}
         </p>
       </div>
@@ -114,10 +111,7 @@ export default function DropZone({
         disabled={status === 'sending'}
         className={`
           w-full py-2.5 rounded-lg text-xs font-medium transition-all duration-150
-          ${status === 'sending'
-            ? 'bg-accent/30 text-white/50 cursor-wait'
-            : 'bg-accent hover:bg-accent-hover active:bg-accent-active text-white'
-          }
+          ${status === 'sending' ? 'theme-primary-button-sending cursor-wait' : 'theme-primary-button'}
           flex items-center justify-center gap-2
         `}
       >
@@ -141,7 +135,7 @@ export default function DropZone({
       </button>
 
       {/* ─── Status Text ─── */}
-      <p className={`text-[11px] text-center ${statusColor} animate-fade-in`}>
+      <p className={`text-[11px] text-center tracking-wide ${statusColor} animate-fade-in`}>
         {statusText}
       </p>
     </div>

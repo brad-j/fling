@@ -9,7 +9,8 @@ const SETTINGS_KEYS = new Set<keyof FlingSettings>([
   'keyPath',
   'screenshotDir',
   'autoCleanupDays',
-  'theme'
+  'theme',
+  'onboardingComplete'
 ])
 
 export interface SendFileOptions {
@@ -91,6 +92,12 @@ export function validateSettingsPatch(value: unknown): Partial<FlingSettings> {
           throw new Error('theme is not supported')
         }
         patch.theme = rawValue
+        break
+      case 'onboardingComplete':
+        if (typeof rawValue !== 'boolean') {
+          throw new Error('onboardingComplete must be a boolean')
+        }
+        patch.onboardingComplete = rawValue
         break
     }
   }

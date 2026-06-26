@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import DropZone from './components/DropZone'
 import History from './components/History'
+import OnboardingPanel from './components/OnboardingPanel'
 import SettingsPanel from './components/SettingsPanel'
 import { useFlingStatus } from './hooks/useFlingStatus'
 import type { AppTheme, FlingSettings, HistoryItem } from '../../main/types'
 
-type View = 'main' | 'settings'
+type View = 'main' | 'settings' | 'onboarding'
 
 const DEFAULT_THEME: AppTheme = 'terminal'
 
@@ -35,6 +36,12 @@ export default function App() {
     refreshSettings()
   }, [refreshHistory, refreshSettings])
 
+  useEffect(() => {
+    if (settings && !settings.onboardingComplete) {
+      setView('onboarding')
+    }
+  }, [settings])
+
   // Refresh history when a send completes
   useEffect(() => {
     if (status === 'success' || status === 'error') {
@@ -58,7 +65,7 @@ export default function App() {
           >
             ← Back
           </button>
-        ) : (
+        ) : view === 'onboarding' ? null : (
           <button
             onClick={() => setView('settings')}
             className="theme-icon-button transition-colors"
@@ -74,7 +81,15 @@ export default function App() {
 
       {/* ─── Content ─── */}
       <div className="flex-1 overflow-y-auto">
-        {view === 'main' ? (
+        {view === 'onboarding' ? (
+          <OnboardingPanel
+            settings={settings}
+            onComplete={(updatedSettings) => {
+              setSettings(updatedSettings)
+              setView('main')
+            }}
+          />
+        ) : view === 'main' ? (
           <div className="flex flex-col gap-3 p-4 animate-fade-in">
             <DropZone status={status} progress={progress} />
             <History items={history} onClear={refreshHistory} />
@@ -91,7 +106,7 @@ export default function App() {
       {/* ─── Footer ─── */}
       <footer className="theme-footer px-4 py-2 border-t">
         <p className="theme-muted-soft text-[10px] text-center tracking-wide">
-          <span className="theme-hotkey">⌘⇧F</span> to send latest screenshot
+          {view === 'onboarding' ? 'Run setup once, fling files fast forever' : <><span className="theme-hotkey">⌘⇧F</span> to send latest screenshot</>}
         </p>
       </footer>
     </div>

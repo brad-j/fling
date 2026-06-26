@@ -39,7 +39,8 @@ const store = new Store<{
       keyPath: '',
       screenshotDir: join(homedir(), 'Desktop', 'screenshots'),
       autoCleanupDays: 7,
-      theme: 'terminal'
+      theme: 'terminal',
+      onboardingComplete: false
     },
     history: [],
     hostKeys: {}
@@ -50,11 +51,33 @@ function isAppTheme(value: unknown): value is AppTheme {
   return typeof value === 'string' && APP_THEMES.includes(value as AppTheme)
 }
 
+function hasRequiredConnectionSettings(settings: FlingSettings): boolean {
+  return Boolean(
+    settings.host?.trim() &&
+    settings.username?.trim() &&
+    settings.remotePath?.trim() &&
+    settings.keyPath?.trim()
+  )
+}
+
 function migrateSettings(settings: FlingSettings): FlingSettings {
   let migrated = settings
+  let changed = false
 
   if (!isAppTheme(migrated.theme)) {
     migrated = { ...migrated, theme: 'terminal' }
+    changed = true
+  }
+
+  if (typeof migrated.onboardingComplete !== 'boolean') {
+    migrated = {
+      ...migrated,
+      onboardingComplete: hasRequiredConnectionSettings(migrated)
+    }
+    changed = true
+  }
+
+  if (changed) {
     store.set('settings', migrated)
   }
 

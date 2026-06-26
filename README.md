@@ -15,6 +15,7 @@ Built for the workflow of talking to a CLI AI agent on a remote machine via SSH/
 - **Auto-copy remote path** — clipboard ready to paste into your terminal
 - **Send history** — last 10 sends, click to copy the path again
 - **TOFU host key verification** — secure by default
+- **First-run onboarding** — guided SSH setup with a test upload
 - **Settings UI** — configure host, port, key path, remote directory
 
 ## Screenshot naming

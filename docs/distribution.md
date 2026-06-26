@@ -83,8 +83,7 @@ See `docs/security.md` for the detailed testing and security checklist.
 
 These are not packaging blockers, but they will matter for non-technical users:
 
-- Add a first-run setup/test-connection flow.
-- Add onboarding or clearer empty-state guidance for first-run settings.
+- Consider adding the onboarding test-connection action to Settings for later edits.
 - Make SSH errors friendlier: missing key, bad permissions, host unreachable,
   auth failed, remote path not writable, host key mismatch.
 - Consider auto-update after the first public release.

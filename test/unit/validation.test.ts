@@ -8,18 +8,21 @@ describe('IPC validation', () => {
       port: '2222',
       username: 'alice',
       theme: 'light',
+      onboardingComplete: true,
       ignored: 'value'
     })).toEqual({
       host: 'server-name',
       port: 2222,
       username: 'alice',
-      theme: 'light'
+      theme: 'light',
+      onboardingComplete: true
     })
   })
 
   it('rejects invalid ports and themes', () => {
     expect(() => validateSettingsPatch({ port: 70000 })).toThrow(/port/)
     expect(() => validateSettingsPatch({ theme: 'neon' })).toThrow(/theme/)
+    expect(() => validateSettingsPatch({ onboardingComplete: 'yes' })).toThrow(/boolean/)
   })
 
   it('rejects null bytes in string settings', () => {

@@ -89,8 +89,7 @@ Renderer hardening:
 
 These should be handled before a broad launch, even if they are not blockers for a small beta:
 
-- Add a first-run setup flow instead of relying on Settings discovery.
-- Add an explicit “Test connection” button.
+- Consider adding the connection test action to Settings for post-onboarding edits.
 - Improve UX for first-time host-key trust and host-key mismatch.
 - Consider storing host-key metadata with algorithm/fingerprint for better user-facing warnings.
 - Keep Electron patched; `pnpm security:audit` must pass before release.

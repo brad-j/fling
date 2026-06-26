@@ -11,6 +11,7 @@ export interface FlingSettings {
   screenshotDir: string
   autoCleanupDays: number
   theme: AppTheme
+  onboardingComplete: boolean
 }
 
 export interface HistoryItem {
@@ -29,4 +30,18 @@ export interface SendProgress {
   filename?: string
   error?: string
   remotePath?: string
+}
+
+export interface ConnectionTestCheck {
+  id: string
+  label: string
+  status: 'success' | 'error' | 'pending'
+  message?: string
+}
+
+export interface ConnectionTestResult {
+  ok: boolean
+  message: string
+  remotePath?: string
+  checks: ConnectionTestCheck[]
 }

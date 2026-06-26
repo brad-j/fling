@@ -5,6 +5,7 @@ import { join } from 'path'
 import { randomUUID } from 'crypto'
 import { getSettings, readPrivateKey, getHostKey, setHostKey } from './settings'
 import { expandRemoteDir, joinRemotePath, shellQuote, stripTrailingSlash } from './remotePath'
+import { describeFileFlingError } from './errors'
 import type { ConnectionTestCheck, ConnectionTestResult, FlingSettings } from './types'
 
 export interface SshResult {
@@ -94,24 +95,6 @@ function assertConnectionSettings(settings: FlingSettings): void {
   if (missing.length > 0) {
     throw new Error(`Missing required connection settings: ${missing.join(', ')}`)
   }
-}
-
-function friendlyConnectionError(err: unknown): string {
-  const message = err instanceof Error ? err.message : String(err)
-  const code = typeof err === 'object' && err !== null && 'code' in err ? String((err as { code?: unknown }).code) : ''
-  const lower = message.toLowerCase()
-
-  if (code === 'ENOENT') return 'SSH key file was not found. Check the key path.'
-  if (code === 'EACCES') return 'SSH key file could not be read. Check file permissions.'
-  if (code === 'ENOTFOUND' || lower.includes('getaddrinfo')) return 'Host could not be resolved. Check the host name.'
-  if (code === 'ECONNREFUSED') return 'Connection was refused. Check the host and SSH port.'
-  if (code === 'ETIMEDOUT' || lower.includes('timed out')) return 'Connection timed out. Check network access, VPN/Tailscale, host, and port.'
-  if (lower.includes('authentication')) return 'Authentication failed. Check username, SSH key, and authorized_keys on the server.'
-  if (lower.includes('host denied') || lower.includes('host key')) return 'Host key verification failed. The server identity may have changed.'
-  if (lower.includes('permission denied')) return 'Permission denied. Check SSH authentication and remote directory permissions.'
-  if (lower.includes('no such file')) return 'A required path was not found. Check the SSH key path and remote directory.'
-
-  return message
 }
 
 function connect(settings: FlingSettings): Promise<Client> {
@@ -215,7 +198,11 @@ export async function testConnection(settings: FlingSettings = getSettings()): P
     const remotePath = joinRemotePath(remoteDir, testFilename)
 
     await runCommand(conn, `mkdir -p -- ${shellQuote(remoteDir)}`)
-    await runCommand(conn, `test -d ${shellQuote(remoteDir)} && test -w ${shellQuote(remoteDir)}`)
+    try {
+      await runCommand(conn, `test -d ${shellQuote(remoteDir)} && test -w ${shellQuote(remoteDir)}`)
+    } catch {
+      throw new Error(`Remote directory is not writable: ${remoteDir}`)
+    }
     mark('remote-dir', 'success', remoteDir)
 
     await fastPut(conn, localTestPath, remotePath)
@@ -229,7 +216,8 @@ export async function testConnection(settings: FlingSettings = getSettings()): P
       checks
     }
   } catch (err) {
-    const message = friendlyConnectionError(err)
+    const friendlyError = describeFileFlingError(err)
+    const message = friendlyError.message
     const firstPending = checks.find((check) => check.status === 'pending')
     if (firstPending) {
       firstPending.status = 'error'

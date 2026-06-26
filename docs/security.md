@@ -84,6 +84,7 @@ Renderer hardening:
 - uploaded filenames are sanitized
 - local send paths are checked to be files, not directories
 - host keys are verified with TOFU storage
+- common SSH/file failures are mapped to actionable user-facing messages
 
 ## Known product/security TODOs
 

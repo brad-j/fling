@@ -3,6 +3,7 @@ import { EventEmitter } from 'events'
 import { statSync } from 'fs'
 import { basename } from 'path'
 import { flingFile } from './ssh'
+import { describeFileFlingError } from './errors'
 import { getLatestScreenshot, sanitizeFilename, timestampFilename } from './files'
 import { getSettings, addHistoryItem, clearHistory, getHistory } from './settings'
 import type { SendProgress, HistoryItem } from './types'
@@ -112,8 +113,9 @@ export async function sendFile(opts: {
     }
     addHistoryItem(historyItem)
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err)
-    notify('FileFling — Error', `Failed to send ${remoteFilename}: ${errorMsg}`)
+    const friendlyError = describeFileFlingError(err)
+    const errorMsg = friendlyError.message
+    notify(friendlyError.title, `Failed to send ${remoteFilename}: ${errorMsg}`)
     broadcastStatus({ status: 'error', filename: remoteFilename, error: errorMsg })
 
     const historyItem: HistoryItem = {

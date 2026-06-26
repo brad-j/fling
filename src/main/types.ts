@@ -10,6 +10,7 @@ export interface FlingSettings {
   keyPath: string
   sshConfigHost: string
   screenshotDir: string
+  clipboardTemplate: string
   autoCleanupDays: number
   theme: AppTheme
   onboardingComplete: boolean
@@ -29,6 +30,7 @@ export interface HistoryItem {
   id: string
   filename: string
   remotePath: string
+  clipboardText?: string
   timestamp: number
   status: 'success' | 'error'
   error?: string

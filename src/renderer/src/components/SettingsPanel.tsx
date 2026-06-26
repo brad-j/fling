@@ -161,6 +161,19 @@ export default function SettingsPanel({
 
       <div className="theme-divider h-px my-1" />
 
+      <h2 className="theme-section-title text-xs font-semibold uppercase tracking-[0.2em]">
+        Clipboard
+      </h2>
+
+      <TemplateField
+        label="Output Template"
+        value={draft.clipboardTemplate}
+        onChange={(v) => handleChange('clipboardTemplate', v)}
+        preview={renderClipboardPreview(draft)}
+      />
+
+      <div className="theme-divider h-px my-1" />
+
       <button
         onClick={handleSave}
         className={`
@@ -307,6 +320,52 @@ function ThemePicker({
         )
       })}
     </div>
+  )
+}
+
+function renderClipboardPreview(settings: FlingSettings): string {
+  const values: Record<string, string> = {
+    remotePath: `/home/${settings.username || 'user'}/shared/example.png`,
+    filename: 'example.png',
+    host: settings.host || 'devbox',
+    username: settings.username || 'user',
+    timestamp: '2026-06-25T14:30:15.000Z'
+  }
+
+  return settings.clipboardTemplate.replace(/{{\s*([a-zA-Z][a-zA-Z0-9_]*)\s*}}/g, (token, key: string) => {
+    return key in values ? values[key] : token
+  })
+}
+
+function TemplateField({
+  label,
+  value,
+  onChange,
+  preview
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  preview: string
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="theme-muted text-[10px] font-medium tracking-wide">{label}</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        className="theme-input rounded-lg px-2.5 py-1.5 text-xs font-mono transition-all focus:outline-none resize-none"
+        placeholder="{{remotePath}}"
+      />
+      <p className="theme-muted-soft text-[9px] leading-relaxed">
+        Tokens: {'{{remotePath}}'}, {'{{filename}}'}, {'{{host}}'}, {'{{username}}'}, {'{{timestamp}}'}
+      </p>
+      <div className="theme-dropzone rounded-lg border px-2.5 py-2">
+        <p className="theme-muted-soft text-[9px] uppercase tracking-wide mb-1">Preview</p>
+        <p className="theme-text text-[10px] font-mono whitespace-pre-wrap break-words">{preview}</p>
+      </div>
+    </label>
   )
 }
 

@@ -9,6 +9,7 @@ const SETTINGS_KEYS = new Set<keyof FlingSettings>([
   'keyPath',
   'sshConfigHost',
   'screenshotDir',
+  'clipboardTemplate',
   'autoCleanupDays',
   'theme',
   'onboardingComplete'
@@ -88,6 +89,9 @@ export function validateSettingsPatch(value: unknown): Partial<FlingSettings> {
         break
       case 'screenshotDir':
         patch.screenshotDir = assertReasonableString(rawValue, key)
+        break
+      case 'clipboardTemplate':
+        patch.clipboardTemplate = assertReasonableString(rawValue, key)
         break
       case 'port':
         patch.port = assertIntegerInRange(rawValue, key, 1, 65535)

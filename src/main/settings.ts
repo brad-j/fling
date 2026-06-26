@@ -42,6 +42,7 @@ const store = new Store<{
       keyPath: '',
       sshConfigHost: '',
       screenshotDir: join(homedir(), 'Desktop', 'screenshots'),
+      clipboardTemplate: '{{remotePath}}',
       autoCleanupDays: 7,
       theme: 'terminal',
       onboardingComplete: false
@@ -75,6 +76,11 @@ function migrateSettings(settings: FlingSettings): FlingSettings {
 
   if (typeof migrated.sshConfigHost !== 'string') {
     migrated = { ...migrated, sshConfigHost: '' }
+    changed = true
+  }
+
+  if (typeof migrated.clipboardTemplate !== 'string' || !migrated.clipboardTemplate.trim()) {
+    migrated = { ...migrated, clipboardTemplate: '{{remotePath}}' }
     changed = true
   }
 

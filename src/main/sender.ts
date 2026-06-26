@@ -4,6 +4,7 @@ import { statSync } from 'fs'
 import { basename } from 'path'
 import { flingFile } from './ssh'
 import { describeFileFlingError } from './errors'
+import { renderClipboardTemplate } from './clipboardTemplate'
 import { getLatestScreenshot, sanitizeFilename, timestampFilename } from './files'
 import { getSettings, addHistoryItem, clearHistory, getHistory } from './settings'
 import type { SendProgress, HistoryItem } from './types'
@@ -96,8 +97,17 @@ export async function sendFile(opts: {
     assertReadableFile(localPath)
     const result = await flingFile(localPath, remoteFilename)
 
-    // Copy remote path to clipboard
-    clipboard.writeText(result.remotePath)
+    const timestamp = Date.now()
+    const clipboardText = renderClipboardTemplate(settings.clipboardTemplate, {
+      remotePath: result.remotePath,
+      filename: remoteFilename,
+      host: settings.host,
+      username: settings.username,
+      timestamp
+    })
+
+    // Copy rendered clipboard output
+    clipboard.writeText(clipboardText)
 
     // Notify
     notify('FileFling — Sent', `${remoteFilename} → ${settings.host}`)
@@ -108,7 +118,8 @@ export async function sendFile(opts: {
       id: randomUUID(),
       filename: remoteFilename,
       remotePath: result.remotePath,
-      timestamp: Date.now(),
+      clipboardText,
+      timestamp,
       status: 'success'
     }
     addHistoryItem(historyItem)

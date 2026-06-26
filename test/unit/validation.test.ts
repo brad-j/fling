@@ -8,6 +8,7 @@ describe('IPC validation', () => {
       port: '2222',
       username: 'alice',
       sshConfigHost: 'devbox',
+      clipboardTemplate: 'Look: {{remotePath}}',
       theme: 'light',
       onboardingComplete: true,
       ignored: 'value'
@@ -16,6 +17,7 @@ describe('IPC validation', () => {
       port: 2222,
       username: 'alice',
       sshConfigHost: 'devbox',
+      clipboardTemplate: 'Look: {{remotePath}}',
       theme: 'light',
       onboardingComplete: true
     })
@@ -25,6 +27,7 @@ describe('IPC validation', () => {
     expect(() => validateSettingsPatch({ port: 70000 })).toThrow(/port/)
     expect(() => validateSettingsPatch({ theme: 'neon' })).toThrow(/theme/)
     expect(() => validateSettingsPatch({ onboardingComplete: 'yes' })).toThrow(/boolean/)
+    expect(() => validateSettingsPatch({ clipboardTemplate: '' })).toThrow(/empty/)
   })
 
   it('rejects null bytes in string settings', () => {

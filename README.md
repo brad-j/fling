@@ -9,10 +9,10 @@ It is built for the workflow of talking to a CLI AI agent on a remote machine vi
 1. Configure an SSH destination once.
 2. Press `⌘⇧F` to send the latest screenshot, or drag a file into the menubar dropdown.
 3. FileFling uploads the file over SFTP.
-4. The remote path is copied to your clipboard.
-5. Paste the path into your remote shell, tmux session, or CLI agent chat.
+4. The configured clipboard output is copied to your clipboard.
+5. Paste the path or prompt into your remote shell, tmux session, or CLI agent chat.
 
-Example pasted value:
+Default pasted value:
 
 ```text
 /home/brad/shared/2026-06-25_143015.png
@@ -27,8 +27,9 @@ Example pasted value:
 - **First-run onboarding** — guided setup flow for SSH destination details.
 - **Connection test upload** — onboarding can run a real test upload and cleanup before finishing setup.
 - **SSH config import** — select concrete hosts from `~/.ssh/config` to fill host, user, port, and identity file.
-- **Auto-copy remote path** — successful sends copy the remote path to the clipboard.
-- **Send history** — keeps the last 10 sends; click a successful item to copy its path again.
+- **Clipboard output templates** — copy a raw path, Markdown, or a reusable agent prompt after upload.
+- **Auto-copy remote output** — successful sends copy the rendered clipboard template.
+- **Send history** — keeps the last 10 sends; click a successful item to copy its rendered clipboard output again.
 - **TOFU host key verification** — trusts on first use and verifies future connections against stored host key metadata.
 - **Host key management** — view trusted host key fingerprints in Settings and forget stale keys after server rebuilds.
 - **Friendly error messages** — common SSH/file failures are mapped to actionable messages.
@@ -79,6 +80,7 @@ Main settings:
 | Remote Path | Directory to upload into, e.g. `~/shared`. |
 | SSH Key Path | Private key path, e.g. `~/.ssh/id_ed25519`. |
 | Screenshot Directory | Local directory scanned for the latest screenshot. |
+| Clipboard Template | Text rendered and copied after successful uploads. |
 | Theme | App appearance. |
 
 The local app store is typically located at:
@@ -113,6 +115,38 @@ Host devbox
 Selecting `devbox` fills the connection fields with the resolved host, username, port, and key path. FileFling still performs uploads through its own `ssh2` transport; advanced OpenSSH options such as `ProxyJump`, `Match`, agent forwarding, and custom `ProxyCommand` are not applied yet.
 
 Wildcard hosts such as `Host *.internal` are ignored in the picker because they are patterns, not concrete destinations.
+
+## Clipboard output templates
+
+By default, FileFling copies the raw remote path:
+
+```text
+{{remotePath}}
+```
+
+You can customize the copied text in Settings with a template. Supported tokens:
+
+- `{{remotePath}}`
+- `{{filename}}`
+- `{{host}}`
+- `{{username}}`
+- `{{timestamp}}`, rendered as an ISO timestamp
+
+Examples:
+
+```text
+Look at this screenshot: {{remotePath}}
+```
+
+```text
+![{{filename}}]({{remotePath}})
+```
+
+```text
+Please inspect this uploaded file on {{host}}: {{remotePath}}
+```
+
+Unknown placeholders are left visible so mistakes are easy to spot. Multiline templates are supported. Send history stores the rendered clipboard text from successful sends, so clicking a history item copies the same output that was copied when the file was originally uploaded.
 
 ## Screenshot and filename behavior
 

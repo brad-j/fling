@@ -27,7 +27,7 @@ export default function History({
     if (item.status === 'error' || !item.remotePath) return
     // The remote path is already on the clipboard from the send,
     // but for history items we need to copy it ourselves via the clipboard API
-    await navigator.clipboard.writeText(item.remotePath)
+    await navigator.clipboard.writeText(item.clipboardText || item.remotePath)
     setCopiedId(item.id)
     setTimeout(() => setCopiedId(null), 1500)
   }
